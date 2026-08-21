@@ -23,7 +23,8 @@ serenity = { version = "0.12", default-features = false, features = [
 # Lavalink (music)
 lavalink-rs = { version = "0.15", default-features = false, features = [
     "serenity",
-    "_rustls-webpki-roots",
+    "tokio-tungstenite",
+    "tungstenite-rustls-webpki-roots",
 ] }
 
 # HTTP client (lyrics API, yt search)
