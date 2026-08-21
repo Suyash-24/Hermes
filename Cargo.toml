@@ -1,0 +1,65 @@
+[package]
+name = "discord-bot"
+version = "0.1.0"
+edition = "2021"
+rust-version = "1.75"
+
+[[bin]]
+name = "bot"
+path = "src/main.rs"
+
+[dependencies]
+# Discord
+serenity = { version = "0.12", default-features = false, features = [
+    "client",
+    "gateway",
+    "rustls_backend",
+    "model",
+    "cache",
+    "framework",
+    "voice",
+] }
+
+# Lavalink (music)
+lavalink-rs = { version = "0.15", default-features = false, features = [
+    "serenity",
+    "_rustls-webpki-roots",
+] }
+
+# HTTP client (lyrics API, yt search)
+reqwest = { version = "0.12", default-features = false, features = [
+    "json",
+    "rustls-tls",
+] }
+
+# Async runtime
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }
+
+# Config & env
+dotenvy = "0.15"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+toml = "0.8"
+
+# Error handling
+anyhow = "1"
+thiserror = "1"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter", "fmt"] }
+
+# Concurrency (shared state across handlers)
+dashmap = "5"
+tokio-util = { version = "0.7", features = ["rt"] }
+
+# Utils
+chrono = { version = "0.4", features = ["serde"] }
+uuid = { version = "1", features = ["v4"] }
+urlencoding = "2"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1
+strip = true

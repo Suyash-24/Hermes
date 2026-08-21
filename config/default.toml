@@ -1,0 +1,17 @@
+[bot]
+name = "Hermes"
+prefix = "^^"
+
+[gateway]
+shards = 1
+reconnect_timeout = 30
+
+[logging]
+level = "info"
+pretty = true
+
+[lavalink]
+host = "54.159.193.249"
+port = 3333
+password = "Ronlly"
+https = false
