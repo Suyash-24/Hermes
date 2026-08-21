@@ -19,7 +19,7 @@ pub fn track_end_event(
 ) -> futures::future::BoxFuture<'static, ()> {
     let reason = format!("{:?}", event.reason);
     Box::pin(async move {
-        let guild_id = match GuildId::from_str_radix(&session_id, 10) {
+        let guild_id = match session_id.parse::<u64>() {
             Ok(id) => GuildId::new(id),
             Err(_) => return,
         };
@@ -27,7 +27,7 @@ pub fn track_end_event(
         info!(guild = %guild_id, reason = %reason, "Track ended");
 
         let user_data = client.data::<MusicEventData>();
-        let Some(data) = user_data else {
+        let Ok(data) = user_data else {
             warn!("No MusicEventData in lavalink client");
             return;
         };
@@ -63,7 +63,7 @@ pub fn track_error_event(
     session_id: String,
     event: &TrackException,
 ) -> futures::future::BoxFuture<'static, ()> {
-    let error_msg = event.exception.message.clone().unwrap_or_default();
+    let error_msg = event.exception.message.clone();
     Box::pin(async move {
         error!(
             guild = %session_id,
@@ -84,7 +84,7 @@ pub fn track_stuck_event(
         if let Ok(guild_id) = session_id.parse::<u64>() {
             let guild_id = GuildId::new(guild_id);
             let user_data = client.data::<MusicEventData>();
-            if let Some(data) = user_data {
+            if let Ok(data) = user_data {
                 let state_lock = data.state.read().await;
                 let queues = &state_lock.music_queues;
                 let queue_arc = get_or_create_queue(queues, guild_id);
