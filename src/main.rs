@@ -10,9 +10,7 @@
 mod commands;
 mod components;
 mod config;
-mod db;
 mod error;
-mod events;
 mod handler;
 mod interactions;
 mod logging;
@@ -22,9 +20,9 @@ mod state;
 use anyhow::{Context, Result};
 use lavalink_rs::{
     client::LavalinkClient,
-    model::NodeBuilder,
+    NodeBuilder,
 };
-use music::events::{FadeEventHandler, MusicEventData};
+use music::events::{track_end_event, track_error_event, track_stuck_event, MusicEventData};
 use serenity::{
     model::gateway::GatewayIntents,
     Client,
@@ -68,6 +66,13 @@ async fn main() -> Result<()> {
         http.get_current_user().await.context("Failed to get current user")?.id
     };
 
+    let lava_events = lavalink_rs::model::events::Events {
+        track_end: Some(track_end_event),
+        track_exception: Some(track_error_event),
+        track_stuck: Some(track_stuck_event),
+        ..Default::default()
+    };
+
     let lava_cfg = &cfg.lavalink;
     let node = NodeBuilder {
         hostname: lava_cfg.address(),
@@ -79,11 +84,8 @@ async fn main() -> Result<()> {
     };
 
     let lavalink = LavalinkClient::new(
-        lavalink_rs::model::events::Events {
-            ..Default::default()
-        },
+        lava_events,
         vec![node],
-        Box::new(FadeEventHandler),
     )
     .await;
 

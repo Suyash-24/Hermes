@@ -4,40 +4,32 @@
 /// The primary job is: when a track ends, pop the next track from the guild
 /// queue and play it.
 use crate::music::{get_or_create_queue, TrackInfo};
-use crate::state::AppStateKey;
+use crate::state::{AppState, AppStateKey};
 use lavalink_rs::{
-    async_trait,
     client::LavalinkClient,
-    error::LavalinkResult,
-    model::events,
+    model::events::{TrackEnd, TrackException, TrackStuck},
 };
 use serenity::model::id::GuildId;
 use tracing::{error, info, warn};
 
-pub struct FadeEventHandler;
-
-#[async_trait]
-impl lavalink_rs::player_context::EventHandler for FadeEventHandler {
-    async fn track_end_event(
-        &self,
-        client: LavalinkClient,
-        session_id: String,
-        event: events::TrackEnd,
-    ) -> LavalinkResult<()> {
+pub fn track_end_event(
+    client: LavalinkClient,
+    session_id: String,
+    event: &TrackEnd,
+) -> futures::future::BoxFuture<'static, ()> {
+    let reason = format!("{:?}", event.reason);
+    Box::pin(async move {
         let guild_id = match GuildId::from_str_radix(&session_id, 10) {
             Ok(id) => GuildId::new(id),
-            Err(_) => return Ok(()),
+            Err(_) => return,
         };
 
-        info!(guild = %guild_id, reason = ?event.reason, "Track ended");
+        info!(guild = %guild_id, reason = %reason, "Track ended");
 
-        // Get data from the stored serenity context (stored via TypeMap).
-        // Since we can't easily get ctx here, we use the global DATA stored in
-        // lavalink client's user data.
         let user_data = client.data::<MusicEventData>();
         let Some(data) = user_data else {
             warn!("No MusicEventData in lavalink client");
-            return Ok(());
+            return;
         };
 
         let state_lock = data.state.read().await;
@@ -55,42 +47,40 @@ impl lavalink_rs::player_context::EventHandler for FadeEventHandler {
             }
         } else {
             info!(guild = %guild_id, "Queue exhausted");
-            // Queue is empty — update the now-playing message if we have one.
             let text_channel = {
                 let queue = queue_arc.lock().await;
                 queue.text_channel
             };
             if let Some(channel_id) = text_channel {
-                // We'll send a "queue ended" notification via http.
                 let _ = send_queue_ended(&data.http, channel_id).await;
             }
         }
+    })
+}
 
-        Ok(())
-    }
-
-    async fn track_error_event(
-        &self,
-        _client: LavalinkClient,
-        session_id: String,
-        event: events::TrackException,
-    ) -> LavalinkResult<()> {
+pub fn track_error_event(
+    _client: LavalinkClient,
+    session_id: String,
+    event: &TrackException,
+) -> futures::future::BoxFuture<'static, ()> {
+    let error_msg = event.exception.message.clone().unwrap_or_default();
+    Box::pin(async move {
         error!(
             guild = %session_id,
-            error = %event.exception.message.unwrap_or_default(),
+            error = %error_msg,
             "Track error"
         );
-        Ok(())
-    }
+    })
+}
 
-    async fn track_stuck_event(
-        &self,
-        client: LavalinkClient,
-        session_id: String,
-        event: events::TrackStuck,
-    ) -> LavalinkResult<()> {
-        warn!(guild = %session_id, threshold = ?event.threshold_ms, "Track stuck");
-        // Auto-skip stuck tracks.
+pub fn track_stuck_event(
+    client: LavalinkClient,
+    session_id: String,
+    event: &TrackStuck,
+) -> futures::future::BoxFuture<'static, ()> {
+    let threshold = event.threshold_ms;
+    Box::pin(async move {
+        warn!(guild = %session_id, threshold = %threshold, "Track stuck");
         if let Ok(guild_id) = session_id.parse::<u64>() {
             let guild_id = GuildId::new(guild_id);
             let user_data = client.data::<MusicEventData>();
@@ -107,8 +97,7 @@ impl lavalink_rs::player_context::EventHandler for FadeEventHandler {
                 }
             }
         }
-        Ok(())
-    }
+    })
 }
 
 // ── Event data passed into lavalink client ────────────────────────────────────

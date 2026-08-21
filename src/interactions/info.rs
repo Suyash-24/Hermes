@@ -37,7 +37,7 @@ pub async fn handle_refresh(
         .container(Some(Colour::FADE), |c| {
             c.section(|s| {
                 s.text(header(E::BRAND, &bot_user.name))
-                 .text(hint(format!("v{version} {E::DOT} shard #{}", ctx.shard_id)))
+                 .text(hint(format!("v{} {} shard #{}", version, E::DOT, ctx.shard_id)))
                  .thumbnail(&bot_avatar)
             })
             .separator(true)
