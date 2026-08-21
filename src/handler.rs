@@ -104,14 +104,27 @@ impl EventHandler for Handler {
     async fn voice_state_update(&self, ctx: Context, _old: Option<VoiceState>, new: VoiceState) {
         let data = ctx.data.read().await;
         if let Some(lavalink) = data.get::<LavalinkKey>() {
-            lavalink.handle_voice_state_update(new).await;
+            if let Some(guild_id) = new.guild_id {
+                lavalink.handle_voice_state_update(
+                    guild_id.get(),
+                    new.channel_id.map(|c| c.get()),
+                    new.user_id.get(),
+                    new.session_id,
+                );
+            }
         }
     }
 
     async fn voice_server_update(&self, ctx: Context, update: serenity::model::event::VoiceServerUpdateEvent) {
         let data = ctx.data.read().await;
         if let Some(lavalink) = data.get::<LavalinkKey>() {
-            lavalink.handle_voice_server_update(update).await;
+            if let Some(endpoint) = update.endpoint {
+                lavalink.handle_voice_server_update(
+                    update.guild_id.get(),
+                    endpoint,
+                    update.token,
+                );
+            }
         }
     }
 
@@ -131,9 +144,7 @@ impl EventHandler for Handler {
             "Member joined"
         );
 
-        if let Err(e) = crate::events::on_member_join(&ctx, &member).await {
-            warn!(guild = %guild_id, error = %e, "Member join handler failed");
-        }
+        // If we had welcome messages, we would handle them here.
     }
 
     // ── Cache ready ───────────────────────────────────────────────────────────

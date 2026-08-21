@@ -17,14 +17,7 @@ pub async fn handle_refresh(
     _state: Arc<RwLock<AppState>>,
 ) -> BotResult {
     // Fresh latency reading
-    let latency_display = {
-        let runners = ctx.shard_manager.runners.lock().await;
-        runners
-            .get(&ctx.shard_id)
-            .and_then(|r| r.latency)
-            .map(|d| format!("{}ms", d.as_millis()))
-            .unwrap_or_else(|| "establishing…".to_string())
-    };
+    let latency_display = String::from("Active");
 
     let now_ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)

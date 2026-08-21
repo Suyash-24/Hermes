@@ -32,7 +32,7 @@ pub async fn run(
     // Avatar URLs
     let base_url = target.avatar_url().unwrap_or_else(|| target.default_avatar_url());
     let png_hd   = base_url.replace("size=1024", "size=4096").replace(".webp", ".png");
-    let has_anim = target.avatar.as_deref().map(|a| a.starts_with("a_")).unwrap_or(false);
+    let has_anim = target.avatar.as_ref().map(|a| a.to_string().starts_with("a_")).unwrap_or(false);
     let gif_url  = has_anim.then(|| {
         base_url.replace("size=1024", "size=4096").replace(".webp", ".gif")
     });

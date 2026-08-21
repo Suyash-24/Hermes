@@ -58,9 +58,7 @@ pub async fn run(
 
     if !already_in_vc {
         // Tell Discord gateway to join the voice channel.
-        ctx.shard
-            .set_voice_state(mc.guild_id, Some(mc.voice_channel), false, false)
-            .map_err(|e| BotError::Lavalink(format!("{e:?}")))?;
+        crate::music::set_voice_state(ctx, mc.guild_id, Some(mc.voice_channel));
 
         // Give Lavalink a moment to receive the voice gateway events.
         tokio::time::sleep(std::time::Duration::from_millis(500)).await;

@@ -20,9 +20,7 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
         }
     };
 
-    ctx.shard
-        .set_voice_state(mc.guild_id, Some(mc.voice_channel), false, false)
-        .map_err(|e| BotError::Lavalink(format!("{e:?}")))?;
+    crate::music::set_voice_state(ctx, mc.guild_id, Some(mc.voice_channel));
 
     {
         let mut q = mc.queue.lock().await;

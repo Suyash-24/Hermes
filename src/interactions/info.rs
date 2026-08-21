@@ -21,7 +21,7 @@ pub async fn handle_refresh(
     let (guild_name, member_count, channel_count, boost_level) =
         if let Some(gid) = component.guild_id {
             if let Some(g) = ctx.cache.guild(gid) {
-                (g.name.clone(), g.member_count, g.channels.len(), g.premium_tier.num())
+                (g.name.clone(), g.member_count, g.channels.len(), g.premium_tier as u8)
             } else {
                 ("Unknown".into(), 0, 0, 0)
             }

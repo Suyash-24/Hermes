@@ -33,9 +33,7 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
     let _ = lava::destroy_player(&lavalink, guild_id).await;
 
     // Disconnect from VC.
-    ctx.shard
-        .set_voice_state(guild_id, None, false, false)
-        .map_err(|e| BotError::Lavalink(format!("{e:?}")))?;
+    crate::music::set_voice_state(ctx, guild_id, None);
 
     // Clear the queue.
     {

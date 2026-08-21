@@ -55,9 +55,11 @@ pub async fn resolve_music_context(
     // Optionally check that bot is in a VC.
     if require_bot_in_vc {
         let bot_in_vc = {
-            let state_lock = state.read().await;
-            let queues = &state_lock.music_queues;
-            if let Some(q) = queues.get(&guild_id) {
+            let queue_arc = {
+                let state_lock = state.read().await;
+                state_lock.music_queues.get(&guild_id).map(|q| std::sync::Arc::clone(q.value()))
+            };
+            if let Some(q) = queue_arc {
                 q.lock().await.voice_channel.is_some()
             } else {
                 false
@@ -92,9 +94,7 @@ pub async fn join_voice(
         .map_err(BotError::Discord)?;
 
     // Lavalink 0.15 joins via update_voice_state on the gateway.
-    ctx.shard
-        .set_voice_state(guild_id, Some(channel_id), false, false)
-        .map_err(|e| BotError::Lavalink(format!("Voice join failed: {e:?}")))?;
+    crate::music::set_voice_state(ctx, guild_id, Some(channel_id));
 
     Ok(())
 }

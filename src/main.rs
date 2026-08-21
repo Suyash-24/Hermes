@@ -20,7 +20,7 @@ mod state;
 use anyhow::{Context, Result};
 use lavalink_rs::{
     client::LavalinkClient,
-    NodeBuilder,
+    node::NodeBuilder,
 };
 use music::events::{track_end_event, track_error_event, track_stuck_event, MusicEventData};
 use serenity::{
@@ -86,6 +86,7 @@ async fn main() -> Result<()> {
     let lavalink = LavalinkClient::new(
         lava_events,
         vec![node],
+        lavalink_rs::model::NodeDistributionStrategy::sharded(),
     )
     .await;
 

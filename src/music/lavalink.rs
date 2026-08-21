@@ -27,7 +27,7 @@ pub async fn search_tracks(
     let search_query = if is_url(query) {
         query.to_string()
     } else {
-        SearchEngines::YouTube.to_query(query)
+        SearchEngines::YouTube.to_query(query).map_err(|e| BotError::Lavalink(e.to_string()))?
     };
 
     let results = lavalink
@@ -69,7 +69,7 @@ pub async fn search_one(
     let search_query = if is_url(query) {
         query.to_string()
     } else {
-        SearchEngines::YouTube.to_query(query)
+        SearchEngines::YouTube.to_query(query).map_err(|e| BotError::Lavalink(e.to_string()))?
     };
 
     let results = lavalink
@@ -106,7 +106,7 @@ pub async fn search_all(
     let search_query = if is_url(query) {
         query.to_string()
     } else {
-        SearchEngines::YouTube.to_query(query)
+        SearchEngines::YouTube.to_query(query).map_err(|e| BotError::Lavalink(e.to_string()))?
     };
 
     let results = lavalink
@@ -143,8 +143,9 @@ pub async fn play_track(
     guild_id: GuildId,
     track: &TrackInfo,
 ) -> BotResult<()> {
-    lavalink
-        .play_now(guild_id, lavalink_rs::model::track::TrackData {
+    let ctx = lavalink.get_player_context(guild_id)
+        .ok_or_else(|| BotError::Lavalink("No player context".into()))?;
+    ctx.play_now(&lavalink_rs::model::track::TrackData {
             encoded: track.encoded.clone(),
             info: lavalink_rs::model::track::TrackInfo {
                 identifier: track.identifier.clone(),
@@ -161,7 +162,7 @@ pub async fn play_track(
             },
             user_data: None,
             plugin_info: Default::default(),
-        }, None)
+        })
         .await
         .map_err(|e| BotError::Lavalink(e.to_string()))?;
     Ok(())
@@ -169,8 +170,9 @@ pub async fn play_track(
 
 /// Pause the player for a guild.
 pub async fn pause(lavalink: &LavalinkClient, guild_id: GuildId) -> BotResult<()> {
-    lavalink
-        .pause(guild_id)
+    let ctx = lavalink.get_player_context(guild_id)
+        .ok_or_else(|| BotError::Lavalink("No player context".into()))?;
+    ctx.set_pause(true)
         .await
         .map_err(|e| BotError::Lavalink(e.to_string()))?;
     Ok(())
@@ -178,8 +180,9 @@ pub async fn pause(lavalink: &LavalinkClient, guild_id: GuildId) -> BotResult<()
 
 /// Resume the player for a guild.
 pub async fn resume(lavalink: &LavalinkClient, guild_id: GuildId) -> BotResult<()> {
-    lavalink
-        .resume(guild_id)
+    let ctx = lavalink.get_player_context(guild_id)
+        .ok_or_else(|| BotError::Lavalink("No player context".into()))?;
+    ctx.set_pause(false)
         .await
         .map_err(|e| BotError::Lavalink(e.to_string()))?;
     Ok(())
@@ -187,8 +190,9 @@ pub async fn resume(lavalink: &LavalinkClient, guild_id: GuildId) -> BotResult<(
 
 /// Stop the player for a guild (stops track, resets position).
 pub async fn stop(lavalink: &LavalinkClient, guild_id: GuildId) -> BotResult<()> {
-    lavalink
-        .stop_now(guild_id, None)
+    let ctx = lavalink.get_player_context(guild_id)
+        .ok_or_else(|| BotError::Lavalink("No player context".into()))?;
+    ctx.stop_now()
         .await
         .map_err(|e| BotError::Lavalink(e.to_string()))?;
     Ok(())
@@ -196,8 +200,9 @@ pub async fn stop(lavalink: &LavalinkClient, guild_id: GuildId) -> BotResult<()>
 
 /// Seek to a position in the current track (milliseconds).
 pub async fn seek(lavalink: &LavalinkClient, guild_id: GuildId, position_ms: u64) -> BotResult<()> {
-    lavalink
-        .seek_to(guild_id, std::time::Duration::from_millis(position_ms))
+    let ctx = lavalink.get_player_context(guild_id)
+        .ok_or_else(|| BotError::Lavalink("No player context".into()))?;
+    ctx.set_position(std::time::Duration::from_millis(position_ms))
         .await
         .map_err(|e| BotError::Lavalink(e.to_string()))?;
     Ok(())
@@ -205,8 +210,9 @@ pub async fn seek(lavalink: &LavalinkClient, guild_id: GuildId, position_ms: u64
 
 /// Set playback volume (0–150).
 pub async fn set_volume(lavalink: &LavalinkClient, guild_id: GuildId, volume: u16) -> BotResult<()> {
-    lavalink
-        .set_volume(guild_id, volume)
+    let ctx = lavalink.get_player_context(guild_id)
+        .ok_or_else(|| BotError::Lavalink("No player context".into()))?;
+    ctx.set_volume(volume)
         .await
         .map_err(|e| BotError::Lavalink(e.to_string()))?;
     Ok(())
@@ -214,8 +220,8 @@ pub async fn set_volume(lavalink: &LavalinkClient, guild_id: GuildId, volume: u1
 
 /// Get the current player position in milliseconds.
 pub async fn get_position(lavalink: &LavalinkClient, guild_id: GuildId) -> Option<u64> {
-    lavalink
-        .get_player(guild_id)
+    lavalink.get_player_context(guild_id)?
+        .get_player()
         .await
         .ok()
         .map(|p| p.state.position as u64)
@@ -223,10 +229,7 @@ pub async fn get_position(lavalink: &LavalinkClient, guild_id: GuildId) -> Optio
 
 /// Disconnect and destroy the player.
 pub async fn destroy_player(lavalink: &LavalinkClient, guild_id: GuildId) -> BotResult<()> {
-    lavalink
-        .destroy_player_and_leave(guild_id, None)
-        .await
-        .map_err(|e| BotError::Lavalink(e.to_string()))?;
+    lavalink.delete_player(guild_id).await.map_err(|e| BotError::Lavalink(e.to_string()))?;
     Ok(())
 }
 
