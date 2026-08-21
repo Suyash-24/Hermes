@@ -120,9 +120,9 @@ impl EventHandler for Handler {
         if let Some(lavalink) = data.get::<LavalinkKey>() {
             if let Some(endpoint) = update.endpoint {
                 lavalink.handle_voice_server_update(
-                    update.guild_id.get(),
+                    update.guild_id.expect("Missing GuildId").get(),
                     endpoint,
-                    update.token,
+                    Some(update.token),
                 );
             }
         }

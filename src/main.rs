@@ -83,10 +83,14 @@ async fn main() -> Result<()> {
         session_id: None,
     };
 
-    let lavalink = LavalinkClient::new(
+    let lavalink = LavalinkClient::new_with_data(
         lava_events,
         vec![node],
-        lavalink_rs::model::NodeDistributionStrategy::sharded(),
+        lavalink_rs::prelude::NodeDistributionStrategy::sharded(),
+        Arc::new(MusicEventData {
+            state: Arc::clone(&state),
+            http: Arc::clone(&client.http),
+        }),
     )
     .await;
 

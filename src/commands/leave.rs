@@ -37,14 +37,17 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
 
     // Clear the queue.
     {
-        let state_lock = state.read().await;
-        if let Some(q) = state_lock.music_queues.get(&guild_id) {
-            let mut q = q.lock().await;
-            q.current = None;
-            q.clear();
-            q.voice_channel = None;
-            q.text_channel = None;
-            q.now_playing_msg = None;
+        let queue_arc = {
+            let state_lock = state.read().await;
+            state_lock.music_queues.get(&guild_id).map(|q| std::sync::Arc::clone(q.value()))
+        };
+        if let Some(q) = queue_arc {
+            let mut queue = q.lock().await;
+            queue.current = None;
+            queue.clear();
+            queue.voice_channel = None;
+            queue.text_channel = None;
+            queue.now_playing_msg = None;
         }
     }
 
