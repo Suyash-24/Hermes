@@ -16,17 +16,30 @@ pub async fn run(
     cmd: &CommandInteraction,
     _state: Arc<RwLock<AppState>>,
 ) -> BotResult {
+    // Try getting WebSocket heartbeat latency from shard manager.
+    // Falls back to measuring a REST round-trip if the heartbeat hasn't fired yet.
     let latency_display = {
-        let data = ctx.data.read().await;
-        if let Some(shard_mgr) = data.get::<ShardManagerKey>() {
-            let runners = shard_mgr.runners.lock().await;
-            runners
-                .get(&ctx.shard_id)
-                .and_then(|r| r.latency)
-                .map(|d| format!("{}ms", d.as_millis()))
-                .unwrap_or_else(|| String::from("Waiting for first heartbeat..."))
-        } else {
-            String::from("Unavailable")
+        let ws_latency = {
+            let data = ctx.data.read().await;
+            if let Some(shard_mgr) = data.get::<ShardManagerKey>() {
+                let runners = shard_mgr.runners.lock().await;
+                runners
+                    .get(&ctx.shard_id)
+                    .and_then(|r| r.latency)
+                    .map(|d| format!("{}ms (WS)", d.as_millis()))
+            } else {
+                None
+            }
+        };
+
+        match ws_latency {
+            Some(l) => l,
+            None => {
+                // Measure REST round-trip as a proxy for latency.
+                let start = std::time::Instant::now();
+                let _ = ctx.http.get_current_user().await;
+                format!("~{}ms (REST)", start.elapsed().as_millis())
+            }
         }
     };
 

@@ -47,6 +47,7 @@ pub mod volume;
 pub mod avatar;
 pub mod info;
 pub mod ping;
+pub mod prefix;
 
 use crate::error::{BotError, BotResult};
 use crate::state::AppState;

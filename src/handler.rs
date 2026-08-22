@@ -8,6 +8,7 @@ use serenity::{
     async_trait,
     model::{
         application::Interaction,
+        channel::Message,
         gateway::Ready,
         guild::{Guild, Member},
         id::GuildId,
@@ -134,6 +135,27 @@ impl EventHandler for Handler {
                     Some(update.token),
                 );
             }
+        }
+    }
+
+    // ── Prefix commands (!play etc.) ────────────────────────────────────────
+
+    async fn message(&self, ctx: Context, msg: Message) {
+        // Ignore bots.
+        if msg.author.bot {
+            return;
+        }
+
+        let content = msg.content.trim().to_string();
+
+        if let Some(query) = content.strip_prefix("!play ") {
+            let query = query.trim().to_string();
+            if query.is_empty() {
+                let _ = msg.reply(&ctx.http, "❌ Please provide a search query or URL. Usage: `!play <song name>`").await;
+                return;
+            }
+            let state = get_state(&ctx).await;
+            crate::commands::prefix::handle_play(&ctx, &msg, state, query).await;
         }
     }
 
