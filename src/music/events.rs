@@ -14,12 +14,13 @@ use tracing::{error, info, warn};
 
 pub fn track_end_event(
     client: LavalinkClient,
-    session_id: String,
+    _session_id: String,
     event: &TrackEnd,
 ) -> futures::future::BoxFuture<'static, ()> {
     let reason = format!("{:?}", event.reason);
+    let event_guild_id = event.guild_id.0;
     Box::pin(async move {
-        let guild_id = GuildId::new(event.guild_id.parse::<u64>().unwrap_or(0));
+        let guild_id = GuildId::new(event_guild_id);
 
         info!(guild = %guild_id, reason = %reason, "Track ended");
 
@@ -86,13 +87,14 @@ pub fn track_end_event(
 
 pub fn track_error_event(
     _client: LavalinkClient,
-    session_id: String,
+    _session_id: String,
     event: &TrackException,
 ) -> futures::future::BoxFuture<'static, ()> {
     let error_msg = event.exception.message.clone();
+    let event_guild_id = event.guild_id.0;
     Box::pin(async move {
         error!(
-            guild = %event.guild_id,
+            guild = %event_guild_id,
             error = %error_msg,
             "Track error"
         );
@@ -101,15 +103,15 @@ pub fn track_error_event(
 
 pub fn track_stuck_event(
     client: LavalinkClient,
-    session_id: String,
+    _session_id: String,
     event: &TrackStuck,
 ) -> futures::future::BoxFuture<'static, ()> {
     let threshold = event.threshold_ms;
+    let event_guild_id = event.guild_id.0;
     Box::pin(async move {
-        warn!(guild = %event.guild_id, threshold = %threshold, "Track stuck");
-        if let Ok(guild_id) = event.guild_id.parse::<u64>() {
-            let guild_id = GuildId::new(guild_id);
-            let user_data = client.data::<MusicEventData>();
+        warn!(guild = %event_guild_id, threshold = %threshold, "Track stuck");
+        let guild_id = GuildId::new(event_guild_id);
+        let user_data = client.data::<MusicEventData>();
             if let Ok(data) = user_data {
                 let state_lock = data.state.read().await;
                 let queues = &state_lock.music_queues;
@@ -122,7 +124,6 @@ pub fn track_stuck_event(
                     let _ = crate::music::lavalink::play_track(&client, guild_id, &track).await;
                 }
             }
-        }
     })
 }
 
