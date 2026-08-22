@@ -49,10 +49,8 @@ pub async fn run(
 
     let response = FadeResponse::new()
         .container(None, |c| {
-            let c = c.section(|s| {
-                s.text(header(E::BRAND, &display_name))
-                 .text(stat(E::ID, "User ID", target.id))
-            })
+            let c = c.text(header(E::BRAND, &display_name))
+                     .text(stat(E::ID, "User ID", target.id))
             .separator(true);
 
             let c = c.media_gallery(|g| {
