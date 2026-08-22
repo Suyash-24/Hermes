@@ -55,13 +55,26 @@ pub async fn run(
         let q = mc.queue.lock().await;
         q.voice_channel.is_some()
     };
-
     if !already_in_vc {
         // Tell Discord gateway to join the voice channel.
         crate::music::set_voice_state(ctx, mc.guild_id, Some(mc.voice_channel));
 
-        // Give Lavalink a moment to receive the voice gateway events and handshake.
-        tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
+        // Poll until Lavalink has fully completed the voice handshake
+        // and created the player context (max 5 seconds).
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
+        loop {
+            if mc.lavalink.get_player_context(mc.guild_id).is_some() {
+                break;
+            }
+            if std::time::Instant::now() >= deadline {
+                let card = build_error_card("Could not connect to voice channel — Lavalink timed out. Please try again.");
+                edit_interaction_response(&ctx.http, &cmd.token, &card)
+                    .await
+                    .map_err(BotError::Discord)?;
+                return Ok(());
+            }
+            tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+        }
 
         let mut q = mc.queue.lock().await;
         q.voice_channel = Some(mc.voice_channel);

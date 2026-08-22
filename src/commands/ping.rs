@@ -16,7 +16,12 @@ pub async fn run(
     cmd: &CommandInteraction,
     _state: Arc<RwLock<AppState>>,
 ) -> BotResult {
-    let latency_display = String::from("Active");
+    let latency_display = ctx
+        .runner_info()
+        .await
+        .and_then(|info| info.latency)
+        .map(|d| format!("{}ms", d.as_millis()))
+        .unwrap_or_else(|| String::from("Measuring..."));
 
     let now_ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -52,7 +57,12 @@ pub async fn handle_refresh(
     component: &ComponentInteraction,
     _state: Arc<RwLock<AppState>>,
 ) -> BotResult {
-    let latency_display = String::from("Active");
+    let latency_display = ctx
+        .runner_info()
+        .await
+        .and_then(|info| info.latency)
+        .map(|d| format!("{}ms", d.as_millis()))
+        .unwrap_or_else(|| String::from("Measuring..."));
 
     let now_ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)
