@@ -93,6 +93,7 @@ async fn main() -> Result<()> {
         Arc::new(MusicEventData {
             state: Arc::clone(&state),
             http: Arc::clone(&client.http),
+            manager: songbird::get(&*client.data.read().await).unwrap().clone(),
         }),
     )
     .await;

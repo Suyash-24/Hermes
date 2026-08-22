@@ -98,10 +98,50 @@ pub fn track_end_event(
                     crate::music::status::update_voice_status(&data.http, vc_id, "Use play <song>").await;
                 } else {
                     crate::music::status::update_voice_status(&data.http, vc_id, "").await;
-                    let _ = crate::music::lavalink::destroy_player(&client, guild_id).await;
-                    // Note: In events, we don't have access to songbird manager directly
-                    // However, we destroy the player. To actually leave the VC, we ideally need songbird,
-                    // but destroying the Lavalink player effectively ends the music session for now.
+                    
+                    let client_clone = client.clone();
+                    let data_clone = data.clone();
+                    let gid = guild_id;
+                    
+                    tokio::spawn(async move {
+                        tokio::time::sleep(std::time::Duration::from_secs(300)).await;
+                        
+                        // Check if 24/7 is now ON
+                        let is_24_7 = {
+                            let app_state = data_clone.state.read().await;
+                            let db_lock = app_state.db.read().await;
+                            db_lock.twenty_four_seven.contains(&gid.get())
+                        };
+                        if is_24_7 { return; }
+                        
+                        // Check if queue is still empty
+                        let is_empty = {
+                            let state = data_clone.state.read().await;
+                            if let Some(q) = state.music_queues.get(&gid) {
+                                let q_lock = q.lock().await;
+                                q_lock.current.is_none()
+                            } else {
+                                true
+                            }
+                        };
+                        
+                        if is_empty {
+                            let _ = crate::music::lavalink::destroy_player(&client_clone, gid).await;
+                            let _ = data_clone.manager.remove(gid).await;
+                            
+                            // Clear VC status and queue state
+                            let state = data_clone.state.read().await;
+                            if let Some(q) = state.music_queues.get(&gid) {
+                                let mut q_lock = q.lock().await;
+                                if let Some(vc) = q_lock.voice_channel {
+                                    crate::music::status::update_voice_status(&data_clone.http, vc, "").await;
+                                }
+                                q_lock.voice_channel = None;
+                                q_lock.text_channel = None;
+                                q_lock.now_playing_msg = None;
+                            }
+                        }
+                    });
                 }
             }
 
@@ -161,6 +201,7 @@ pub fn track_stuck_event(
 pub struct MusicEventData {
     pub state: std::sync::Arc<tokio::sync::RwLock<crate::state::AppState>>,
     pub http: std::sync::Arc<serenity::http::Http>,
+    pub manager: std::sync::Arc<songbird::Songbird>,
 }
 
 async fn send_queue_ended(
