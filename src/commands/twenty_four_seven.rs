@@ -60,6 +60,32 @@ pub async fn run(
     let msg = if is_now_enabled {
         "✅ 24/7 mode **Enabled**. The bot will stay in the voice channel after the queue ends."
     } else {
+        // Edge case: if disabled and we are idle in VC, leave immediately.
+        let queue_arc = {
+            let state_read = state.read().await;
+            state_read.music_queues.get(&guild_id).map(|r| r.value().clone())
+        };
+
+        if let Some(queue_arc) = queue_arc {
+            let mut q_lock = queue_arc.lock().await;
+            if q_lock.current.is_none() && q_lock.voice_channel.is_some() {
+                if let Some(vc_id) = q_lock.voice_channel {
+                    crate::music::status::update_voice_status(&ctx.http, vc_id, "", None, None).await;
+                }
+                if let Some(manager) = songbird::get(ctx).await {
+                    let _ = manager.remove(guild_id).await;
+                }
+                let lavalink = {
+                    let data = ctx.data.read().await;
+                    data.get::<crate::state::LavalinkKey>().expect("LavalinkKey missing").clone()
+                };
+                let _ = crate::music::lavalink::destroy_player(&lavalink, guild_id).await;
+                
+                q_lock.voice_channel = None;
+                q_lock.text_channel = None;
+                q_lock.now_playing_msg = None;
+            }
+        }
         "❌ 24/7 mode **Disabled**. The bot will leave the voice channel when stopped or queue ends."
     };
 
