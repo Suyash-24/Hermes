@@ -1,7 +1,8 @@
 [bot]
 name = "Hermes"
 prefix = "^^"
-owners = []
+owners = [1319707981377699920,
+1425797581962874910]
 
 [gateway]
 shards = 1
