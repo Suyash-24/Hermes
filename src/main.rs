@@ -89,10 +89,10 @@ async fn main() -> Result<()> {
         lava_events,
         vec![node],
         lavalink_rs::prelude::NodeDistributionStrategy::sharded(),
-        Arc::new(MusicEventData {
+        MusicEventData {
             state: Arc::clone(&state),
             http: Arc::clone(&client.http),
-        }),
+        },
     )
     .await;
 

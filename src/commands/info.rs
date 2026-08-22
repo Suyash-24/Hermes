@@ -89,8 +89,7 @@ async fn build_info_response(
             ))
             .separator(true)
             .action_row(|r| {
-                r.link("https://github.com", "Source")
-                 .button_emoji("info_refresh", "Refresh", ButtonStyle::Secondary, E::REFRESH)
+                r.button_emoji("info_refresh", "Refresh", ButtonStyle::Secondary, E::REFRESH)
             })
         })
 }
