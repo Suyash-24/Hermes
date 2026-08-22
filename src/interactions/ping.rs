@@ -6,7 +6,7 @@ use crate::components::emoji::{header, stat, E};
 use crate::components::v2::{ButtonStyle, FadeResponse, IS_COMPONENTS_V2};
 use crate::error::BotResult;
 use crate::state::{AppState, ShardManagerKey};
-use serenity::{gateway::ShardId, model::application::ComponentInteraction, prelude::*};
+use serenity::{model::application::ComponentInteraction, prelude::*};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
@@ -22,7 +22,7 @@ pub async fn handle_refresh(
         if let Some(shard_mgr) = data.get::<ShardManagerKey>() {
             let runners = shard_mgr.runners.lock().await;
             runners
-                .get(&ShardId(ctx.shard_id.0))
+                .get(&ctx.shard_id)
                 .and_then(|r| r.latency)
                 .map(|d| format!("{}ms", d.as_millis()))
                 .unwrap_or_else(|| String::from("Measuring..."))
