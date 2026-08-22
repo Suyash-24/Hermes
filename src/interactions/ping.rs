@@ -25,7 +25,7 @@ pub async fn handle_refresh(
                 .get(&ctx.shard_id)
                 .and_then(|r| r.latency)
                 .map(|d| format!("{}ms", d.as_millis()))
-                .unwrap_or_else(|| String::from("Measuring..."))
+                .unwrap_or_else(|| String::from("Waiting for first heartbeat..."))
         } else {
             String::from("Unavailable")
         }
