@@ -15,8 +15,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         Ok(c) => c,
         Err(e) => {
             let card = build_error_card(&e.to_string());
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.respond(ctx, &card).await?;
             return Ok(());
         }
     };
@@ -30,8 +29,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
 
     if !(0..=150).contains(&vol) {
         let card = build_error_card("Volume must be between 0 and 150.");
-        respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-            .await.map_err(BotError::Discord)?;
+        cmd.respond(ctx, &card).await?;
         return Ok(());
     }
 
@@ -44,7 +42,6 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
 
     let emoji = if vol == 0 { E::MUTED } else if vol < 50 { E::VOLUME_DOWN } else { E::VOLUME_UP };
     let card = build_success_card(&format!("{emoji} Volume set to **{vol}%**"));
-    respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-        .await.map_err(BotError::Discord)?;
+    cmd.respond(ctx, &card).await?;
     Ok(())
 }

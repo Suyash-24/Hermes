@@ -14,23 +14,20 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         Ok(c) => c,
         Err(e) => {
             let card = build_error_card(&e.to_string());
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.respond(ctx, &card).await?;
             return Ok(());
         }
     };
 
     if mc.queue.lock().await.current.is_none() {
         let card = build_error_card("Nothing is currently playing.");
-        respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-            .await.map_err(BotError::Discord)?;
+        cmd.respond(ctx, &card).await?;
         return Ok(());
     }
 
     lava::pause(&mc.lavalink, mc.guild_id).await?;
 
     let card = build_success_card("⏸ Playback paused.");
-    respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-        .await.map_err(BotError::Discord)?;
+    cmd.respond(ctx, &card).await?;
     Ok(())
 }

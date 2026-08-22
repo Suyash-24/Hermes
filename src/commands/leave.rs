@@ -11,12 +11,11 @@ use std::sync::Arc;
 use tokio::sync::RwLock;
 
 pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'_>, state: Arc<RwLock<AppState>>, _args: &[&str]) -> BotResult<()> {
-    let guild_id = match cmd.guild_id {
+    let guild_id = match cmd.guild_id() {
         Some(id) => id,
         None => {
             let card = build_error_card("Must be used in a server.");
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.respond(ctx, &card).await?;
             return Ok(());
         }
     };
@@ -54,7 +53,6 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
     }
 
     let card = build_success_card(&format!("{} Disconnected from voice channel.", E::LEFT_VC));
-    respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-        .await.map_err(BotError::Discord)?;
+    cmd.respond(ctx, &card).await?;
     Ok(())
 }

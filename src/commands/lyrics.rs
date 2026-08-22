@@ -16,14 +16,10 @@ struct LyricsResponse {
 }
 
 pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'_>, state: Arc<RwLock<AppState>>, _args: &[&str]) -> BotResult<()> {
-    cmd.defer(ctx).await.map_err(BotError::Discord)?;
+    cmd.defer(ctx).await?;
 
     // Try to get the query from the option, or fall back to current track.
-    let query = cmd
-        .data
-        .options
-        .first()
-        .and_then(|o| o.value.as_str())
+    let query = match cmd { crate::commands::context::CommandContext::Slash(c) => c.data.options().iter().find_map(|opt| match &opt.value { serenity::model::application::ResolvedValue::String(s) => Some(s.as_str()), _ => None }), crate::commands::context::CommandContext::Prefix(_) => _args.first().copied() }
         .map(|s| s.to_string());
 
     let (artist, title) = if let Some(q) = query {
@@ -35,12 +31,11 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         }
     } else {
         // Fall back to currently playing track.
-        let guild_id = match cmd.guild_id {
+        let guild_id = match cmd.guild_id() {
             Some(id) => id,
             None => {
                 let card = error_card("Must be used in a server.");
-                crate::components::v2::edit_interaction_response(&ctx.http, &cmd.token, &card)
-                    .await.map_err(BotError::Discord)?;
+                cmd.edit(ctx, &card).await?;
                 return Ok(());
             }
         };
@@ -53,11 +48,10 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         };
 
         match current {
-            Some(track) => (track.author.clone(), track.title.clone()),
+            Some(track) => (track.author.clone(), track.title.to_string()),
             None => {
                 let card = error_card("Nothing is playing and no query was provided.");
-                crate::components::v2::edit_interaction_response(&ctx.http, &cmd.token, &card)
-                    .await.map_err(BotError::Discord)?;
+                cmd.edit(ctx, &card).await?;
                 return Ok(());
             }
         }
@@ -75,16 +69,14 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         Ok(r) => r.json().await.unwrap_or(LyricsResponse { lyrics: None, error: Some("Parse error".into()) }),
         Err(e) => {
             let card = error_card(&format!("Failed to fetch lyrics: {e}"));
-            crate::components::v2::edit_interaction_response(&ctx.http, &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.edit(ctx, &card).await?;
             return Ok(());
         }
     };
 
     if let Some(err) = resp.error {
         let card = error_card(&format!("Lyrics not found: {err}"));
-        crate::components::v2::edit_interaction_response(&ctx.http, &cmd.token, &card)
-            .await.map_err(BotError::Discord)?;
+        cmd.edit(ctx, &card).await?;
         return Ok(());
     }
 
@@ -97,7 +89,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
     };
 
     let search_label = if artist.is_empty() {
-        title.clone()
+        title.to_string()
     } else {
         format!("{artist} — {title}")
     };
@@ -110,8 +102,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
          .text(hint("Source: lyrics.ovh"))
     });
 
-    crate::components::v2::edit_interaction_response(&ctx.http, &cmd.token, &card)
-        .await.map_err(BotError::Discord)?;
+    cmd.edit(ctx, &card).await?;
     Ok(())
 }
 

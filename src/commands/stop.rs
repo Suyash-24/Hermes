@@ -14,8 +14,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         Ok(c) => c,
         Err(e) => {
             let card = build_error_card(&e.to_string());
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.respond(ctx, &card).await?;
             return Ok(());
         }
     };
@@ -29,7 +28,6 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
     }
 
     let card = build_success_card("⏹ Stopped playback and cleared the queue.");
-    respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-        .await.map_err(BotError::Discord)?;
+    cmd.respond(ctx, &card).await?;
     Ok(())
 }

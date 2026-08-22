@@ -14,8 +14,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         Ok(c) => c,
         Err(e) => {
             let card = build_error_card(&e.to_string());
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.respond(ctx, &card).await?;
             return Ok(());
         }
     };
@@ -35,8 +34,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         Some(t) => t,
         None => {
             let card = build_error_card("Nothing is currently playing.");
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.respond(ctx, &card).await?;
             return Ok(());
         }
     };
@@ -46,7 +44,6 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         .unwrap_or(0);
 
     let card = build_now_playing_card(&track, position_ms, loop_mode, shuffled, volume, queue_len, false);
-    respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-        .await.map_err(BotError::Discord)?;
+    cmd.respond(ctx, &card).await?;
     Ok(())
 }

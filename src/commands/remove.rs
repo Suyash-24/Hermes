@@ -14,8 +14,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         Ok(c) => c,
         Err(e) => {
             let card = build_error_card(&e.to_string());
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.respond(ctx, &card).await?;
             return Ok(());
         }
     };
@@ -38,13 +37,11 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
                 "{} Removed **{}** from position #{pos}",
                 E::CLOSE, track.title
             ));
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.respond(ctx, &card).await?;
         }
         None => {
             let card = build_error_card(&format!("No track at position #{pos}."));
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.respond(ctx, &card).await?;
         }
     }
 

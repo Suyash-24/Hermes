@@ -15,17 +15,12 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         Ok(c) => c,
         Err(e) => {
             let card = build_error_card(&e.to_string());
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.respond(ctx, &card).await?;
             return Ok(());
         }
     };
 
-    let mode_str = cmd
-        .data
-        .options
-        .first()
-        .and_then(|o| o.value.as_str());
+    let mode_str = match cmd { crate::commands::context::CommandContext::Slash(c) => c.data.options().iter().find_map(|opt| match &opt.value { serenity::model::application::ResolvedValue::String(s) => Some(s.as_str()), _ => None }), crate::commands::context::CommandContext::Prefix(_) => _args.first().copied() };
 
     let new_mode = {
         let mut q = mc.queue.lock().await;
@@ -46,7 +41,6 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
     };
 
     let card = build_success_card(&format!("{emoji} {label}"));
-    respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-        .await.map_err(BotError::Discord)?;
+    cmd.respond(ctx, &card).await?;
     Ok(())
 }

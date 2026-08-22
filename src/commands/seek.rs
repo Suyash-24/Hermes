@@ -15,25 +15,19 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         Ok(c) => c,
         Err(e) => {
             let card = build_error_card(&e.to_string());
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.respond(ctx, &card).await?;
             return Ok(());
         }
     };
 
-    let ts_str = cmd
-        .data
-        .options
-        .first()
-        .and_then(|o| o.value.as_str())
+    let ts_str = match cmd { crate::commands::context::CommandContext::Slash(c) => c.data.options().iter().find_map(|opt| match &opt.value { serenity::model::application::ResolvedValue::String(s) => Some(s.as_str()), _ => None }), crate::commands::context::CommandContext::Prefix(_) => _args.first().copied() }
         .unwrap_or("");
 
     let position_ms = match parse_timestamp(ts_str) {
         Some(ms) => ms,
         None => {
             let card = build_error_card(&format!("Invalid timestamp `{ts_str}`. Use `mm:ss` or `hh:mm:ss`."));
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.respond(ctx, &card).await?;
             return Ok(());
         }
     };
@@ -49,15 +43,13 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
             "Cannot seek past the end of the track (`{}`).",
             format_duration_ms(duration_ms)
         ));
-        respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-            .await.map_err(BotError::Discord)?;
+        cmd.respond(ctx, &card).await?;
         return Ok(());
     }
 
     lava::seek(&mc.lavalink, mc.guild_id, position_ms).await?;
 
     let card = build_success_card(&format!("{} Seeked to `{}`", E::DURATION, format_duration_ms(position_ms)));
-    respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-        .await.map_err(BotError::Discord)?;
+    cmd.respond(ctx, &card).await?;
     Ok(())
 }
