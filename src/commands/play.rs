@@ -62,8 +62,15 @@ pub async fn run(
 
         match handler {
             Ok((conn_info, _)) => {
+                let lava_conn = lavalink_rs::model::player::ConnectionInfo {
+                    endpoint: conn_info.endpoint.clone(),
+                    token: conn_info.token.clone(),
+                    session_id: conn_info.session_id.clone(),
+                    channel_id: Some(mc.voice_channel),
+                };
+                
                 // Initialize the player context with the connection info
-                if let Err(e) = mc.lavalink.create_player_context(mc.guild_id, conn_info).await {
+                if let Err(e) = mc.lavalink.create_player_context(mc.guild_id, lava_conn).await {
                     let card = build_error_card(&format!("Failed to create player context: {}", e));
                     edit_interaction_response(&ctx.http, &cmd.token, &card)
                         .await
