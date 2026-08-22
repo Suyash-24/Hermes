@@ -147,8 +147,8 @@ pub struct ContainerBuilder {
 }
 
 impl ContainerBuilder {
-    pub fn new(accent: Option<u32>) -> Self {
-        Self { accent, spoiler: false, components: Vec::new() }
+    pub fn new(_accent: Option<u32>) -> Self {
+        Self { accent: None, spoiler: false, components: Vec::new() }
     }
 
     pub fn spoiler(mut self) -> Self {

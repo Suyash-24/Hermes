@@ -56,28 +56,28 @@ pub async fn run(
         q.voice_channel.is_some()
     };
     if !already_in_vc {
-        // Tell Discord gateway to join the voice channel.
-        crate::music::set_voice_state(ctx, mc.guild_id, Some(mc.voice_channel));
+        // Use songbird to join the voice channel
+        let manager = songbird::get(ctx).await.expect("Songbird client placed in at initialization").clone();
+        let handler = manager.join_gateway(mc.guild_id, mc.voice_channel).await;
 
-        // Poll until Lavalink has fully completed the voice handshake
-        // and created the player context (max 5 seconds).
-        let conn_info = match mc.lavalink.get_connection_info(mc.guild_id, std::time::Duration::from_secs(5)).await {
-            Ok(c) => c,
-            Err(_) => {
-                let card = build_error_card("Could not connect to voice channel — Lavalink timed out. Please try again.");
+        match handler {
+            Ok((conn_info, _)) => {
+                // Initialize the player context with the connection info
+                if let Err(e) = mc.lavalink.create_player_context(mc.guild_id, conn_info).await {
+                    let card = build_error_card(&format!("Failed to create player context: {}", e));
+                    edit_interaction_response(&ctx.http, &cmd.token, &card)
+                        .await
+                        .map_err(BotError::Discord)?;
+                    return Ok(());
+                }
+            }
+            Err(why) => {
+                let card = build_error_card(&format!("Could not connect to voice channel: {}", why));
                 edit_interaction_response(&ctx.http, &cmd.token, &card)
                     .await
                     .map_err(BotError::Discord)?;
                 return Ok(());
             }
-        };
-
-        if let Err(e) = mc.lavalink.create_player_context(mc.guild_id, conn_info).await {
-            let card = build_error_card(&format!("Failed to create player context: {}", e));
-            edit_interaction_response(&ctx.http, &cmd.token, &card)
-                .await
-                .map_err(BotError::Discord)?;
-            return Ok(());
         }
 
         let mut q = mc.queue.lock().await;

@@ -78,23 +78,4 @@ pub async fn resolve_music_context(
     Ok(MusicContext { guild_id, voice_channel, queue, lavalink })
 }
 
-/// Join a voice channel via Lavalink.
-pub async fn join_voice(
-    ctx: &Context,
-    guild_id: GuildId,
-    channel_id: ChannelId,
-    lavalink: &LavalinkClient,
-) -> BotResult<()> {
-    let manager = ctx.data.read().await;
-    // Tell serenity to join the voice channel; Lavalink receives the token via
-    // voice_server_update forwarded from handler.rs.
-    ctx.http
-        .get_guild(guild_id)
-        .await
-        .map_err(BotError::Discord)?;
 
-    // Lavalink 0.15 joins via update_voice_state on the gateway.
-    crate::music::set_voice_state(ctx, guild_id, Some(channel_id));
-
-    Ok(())
-}

@@ -17,24 +17,7 @@ use serenity::model::id::{ChannelId, GuildId, MessageId};
 use std::sync::Arc;
 use tokio::sync::{Mutex, RwLock};
 
-pub fn set_voice_state(
-    ctx: &serenity::prelude::Context,
-    guild_id: serenity::model::id::GuildId,
-    channel_id: Option<serenity::model::id::ChannelId>,
-) {
-    let payload = serde_json::json!({
-        "op": 4,
-        "d": {
-            "guild_id": guild_id.get(),
-            "channel_id": channel_id.map(|c| c.get()),
-            "self_mute": false,
-            "self_deaf": false,
-        }
-    });
-    ctx.shard.websocket_message(tokio_tungstenite::tungstenite::Message::Text(
-        payload.to_string().into(),
-    ));
-}
+
 
 // ── Per-guild queue store ──────────────────────────────────────────────────────
 

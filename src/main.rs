@@ -29,6 +29,7 @@ use serenity::{
 };
 use state::{AppState, AppStateKey, LavalinkKey, ShardManagerKey};
 use std::sync::Arc;
+use songbird::SerenityInit;
 use tracing::info;
 
 #[tokio::main]
@@ -54,6 +55,7 @@ async fn main() -> Result<()> {
     // ── 5. Build serenity client ──────────────────────────────────────────────
     let mut client = Client::builder(&cfg.token, intents)
         .event_handler(handler::Handler)
+        .register_songbird()
         .await
         .context("Failed to create Discord client")?;
 

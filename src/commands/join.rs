@@ -20,7 +20,29 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
         }
     };
 
-    crate::music::set_voice_state(ctx, mc.guild_id, Some(mc.voice_channel));
+    // Use songbird to join the voice channel
+    let manager = songbird::get(ctx).await.expect("Songbird client placed in at initialization").clone();
+    let handler = manager.join_gateway(mc.guild_id, mc.voice_channel).await;
+
+    match handler {
+        Ok((conn_info, _)) => {
+            // Initialize the player context with the connection info
+            if let Err(e) = mc.lavalink.create_player_context(mc.guild_id, conn_info).await {
+                let card = build_error_card(&format!("Failed to create player context: {}", e));
+                respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
+                    .await
+                    .map_err(BotError::Discord)?;
+                return Ok(());
+            }
+        }
+        Err(why) => {
+            let card = build_error_card(&format!("Could not connect to voice channel: {}", why));
+            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
+                .await
+                .map_err(BotError::Discord)?;
+            return Ok(());
+        }
+    }
 
     {
         let mut q = mc.queue.lock().await;

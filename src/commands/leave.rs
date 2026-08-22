@@ -32,8 +32,10 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
     // Stop + destroy player.
     let _ = lava::destroy_player(&lavalink, guild_id).await;
 
-    // Disconnect from VC.
-    crate::music::set_voice_state(ctx, guild_id, None);
+    // Disconnect from VC using songbird.
+    if let Some(manager) = songbird::get(ctx).await {
+        let _ = manager.remove(guild_id).await;
+    }
 
     // Clear the queue.
     {
