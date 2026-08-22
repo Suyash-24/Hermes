@@ -148,13 +148,18 @@ impl EventHandler for Handler {
 
         let content = msg.content.trim().to_string();
 
-        if let Some(query) = content.strip_prefix("!play ") {
+        let state = get_state(&ctx).await;
+        let prefix = {
+            let s = state.read().await;
+            s.config.bot.prefix.clone()
+        };
+
+        if let Some(query) = content.strip_prefix(&format!("{prefix}play ")) {
             let query = query.trim().to_string();
             if query.is_empty() {
-                let _ = msg.reply(&ctx.http, "❌ Please provide a search query or URL. Usage: `!play <song name>`").await;
+                let _ = msg.reply(&ctx.http, format!("❌ Please provide a search query or URL. Usage: `{prefix}play <song name>`")).await;
                 return;
             }
-            let state = get_state(&ctx).await;
             crate::commands::prefix::handle_play(&ctx, &msg, state, query).await;
         }
     }
@@ -167,7 +172,7 @@ impl EventHandler for Handler {
         }
     }
 
-    async fn guild_member_addition(&self, ctx: Context, member: Member) {
+    async fn guild_member_addition(&self, _ctx: Context, member: Member) {
         let guild_id = member.guild_id;
         info!(
             guild = %guild_id,

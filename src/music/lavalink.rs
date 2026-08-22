@@ -125,10 +125,13 @@ pub async fn search_all(
             .into_iter()
             .map(|t| lava_to_track(t, requested_by, requested_by_name))
             .collect(),
-        Some(TrackLoadData::Search(hits)) => hits
-            .into_iter()
-            .map(|t| lava_to_track(t, requested_by, requested_by_name))
-            .collect(),
+        Some(TrackLoadData::Search(hits)) => {
+            if let Some(first) = hits.into_iter().next() {
+                vec![lava_to_track(first, requested_by, requested_by_name)]
+            } else {
+                vec![]
+            }
+        },
         _ => vec![],
     };
 

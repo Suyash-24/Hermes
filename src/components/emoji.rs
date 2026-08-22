@@ -35,8 +35,8 @@ impl E {
 
     // ── Actions / UI ─────────────────────────────────────────────────────────
     pub const REFRESH:     &'static str = "🔄";
-    pub const BACK:        &'static str = "←";
-    pub const FORWARD:     &'static str = "→";
+    pub const BACK:        &'static str = "◀️";
+    pub const FORWARD:     &'static str = "▶️";
     pub const LINK:        &'static str = "⎋";
     pub const CLOSE:       &'static str = "✕";
     pub const CONFIRM:     &'static str = "✔";

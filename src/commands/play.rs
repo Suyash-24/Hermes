@@ -96,10 +96,7 @@ pub async fn run(
         q.text_channel = cmd.channel_id.into();
     }
 
-    let text_channel_id = cmd.channel_id;
-
     // Resolve tracks.
-    let is_url = query.starts_with("http://") || query.starts_with("https://");
     let requested_by = cmd.user.id.get();
     let requested_by_name = cmd.user.name.clone();
 

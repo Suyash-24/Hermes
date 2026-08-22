@@ -44,6 +44,28 @@ pub fn track_end_event(
             info!(guild = %guild_id, title = %track.title, "Playing next track");
             if let Err(e) = crate::music::lavalink::play_track(&client, guild_id, &track).await {
                 error!(guild = %guild_id, error = %e, "Failed to play next track");
+            } else {
+                // Get queue state to build card
+                let (loop_mode, shuffled, volume, queue_len, text_channel, old_msg) = {
+                    let q = queue_arc.lock().await;
+                    (q.loop_mode, q.shuffle, q.volume, q.tracks.len(), q.text_channel, q.now_playing_msg)
+                };
+
+                // Delete old now-playing message if it exists
+                if let Some((chan_id, msg_id)) = old_msg {
+                    let _ = data.http.delete_message(chan_id, msg_id, None).await;
+                }
+
+                // Send new now-playing card
+                if let Some(chan_id) = text_channel {
+                    use crate::commands::music_cards::build_now_playing_card;
+                    let card = build_now_playing_card(&track, 0, loop_mode, shuffled, volume, queue_len, false);
+                    if let Ok(msg) = crate::components::v2::respond_to_channel(&data.http, chan_id, &card).await {
+                        // Store the new message ID in the queue state
+                        let mut q = queue_arc.lock().await;
+                        q.now_playing_msg = Some((chan_id, msg.id));
+                    }
+                }
             }
         } else {
             info!(guild = %guild_id, "Queue exhausted");
@@ -122,5 +144,6 @@ async fn send_queue_ended(
         c.text(format!("{} Queue ended — nothing left to play.", E::STOPPED))
     });
 
-    respond_to_channel(http, channel_id, &response).await
+    let _ = respond_to_channel(http, channel_id, &response).await;
+    Ok(())
 }

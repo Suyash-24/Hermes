@@ -11,13 +11,15 @@ pub mod queue;
 
 pub use queue::{GuildQueue, LoopMode, TrackInfo};
 
-use crate::state::AppState;
-use dashmap::DashMap;
-use serenity::model::id::{ChannelId, GuildId, MessageId};
+use crate::music::lavalink::{
+    model::{
+        track::{TrackData, TrackInfo as LavaTrackInfo},
+    },
+};
+use serenity::model::id::GuildId;
 use std::sync::Arc;
-use tokio::sync::{Mutex, RwLock};
-
-
+use tokio::sync::Mutex;
+use dashmap::DashMap;
 
 // ── Per-guild queue store ──────────────────────────────────────────────────────
 

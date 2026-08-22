@@ -451,15 +451,14 @@ pub async fn respond_to_channel(
     http: &std::sync::Arc<serenity::http::Http>,
     channel_id: serenity::model::id::ChannelId,
     response: &FadeResponse,
-) -> Result<(), serenity::Error> {
+) -> Result<serenity::model::channel::Message, serenity::Error> {
     let flags = IS_COMPONENTS_V2;
     let body = serde_json::json!({
         "flags": flags,
         "components": response.components_value(),
     });
     // POST to the messages endpoint with the Components v2 flag.
-    http.send_message(channel_id, vec![], &body).await?;
-    Ok(())
+    http.send_message(channel_id, vec![], &body).await
 }
 
 /// Edit an existing channel message with a `FadeResponse`.
