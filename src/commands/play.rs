@@ -19,7 +19,7 @@ pub async fn run(
     args: &[&str],
 ) -> BotResult<()> {
     // Defer response so we have time to fetch track data.
-    cmd.defer(ctx).await.map_err(BotError::Discord)?;
+    cmd.defer(ctx).await?;
 
     let query = match cmd {
         crate::commands::context::CommandContext::Slash(c) => c
@@ -42,9 +42,7 @@ pub async fn run(
         Ok(c) => c,
         Err(e) => {
             let card = build_error_card(&e.to_string());
-            edit_interaction_response(&ctx.http, &cmd.token, &card)
-                .await
-                .map_err(BotError::Discord)?;
+            cmd.edit(ctx, &card).await?;
             return Ok(());
         }
     };

@@ -5,7 +5,7 @@ use crate::components::{
 };
 use crate::error::{BotError, BotResult};
 use crate::state::{AppState, LavalinkKey};
-use serenity::{model::application::CommandInteraction, prelude::*};
+use serenity::{model::application::ComponentInteraction, prelude::*};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -15,7 +15,7 @@ struct LyricsResponse {
     error: Option<String>,
 }
 
-pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppState>>) -> BotResult {
+pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'_>, state: Arc<RwLock<AppState>>, _args: &[&str]) -> BotResult<()> {
     cmd.defer(ctx).await.map_err(BotError::Discord)?;
 
     // Try to get the query from the option, or fall back to current track.

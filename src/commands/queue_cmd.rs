@@ -4,13 +4,13 @@ use super::music_helpers::resolve_music_context;
 use crate::components::v2::respond_to_interaction;
 use crate::error::{BotError, BotResult};
 use crate::state::AppState;
-use serenity::{model::application::CommandInteraction, prelude::*};
+use serenity::{model::application::ComponentInteraction, prelude::*};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
 pub const PAGE_SIZE: usize = 8;
 
-pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppState>>) -> BotResult {
+pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'_>, state: Arc<RwLock<AppState>>, _args: &[&str]) -> BotResult<()> {
     let mc = match resolve_music_context(ctx, cmd, &state, true).await {
         Ok(c) => c,
         Err(e) => {

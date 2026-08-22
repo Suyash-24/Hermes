@@ -6,11 +6,11 @@ use crate::components::v2::respond_to_interaction;
 use crate::error::{BotError, BotResult};
 use crate::music::lavalink as lava;
 use crate::state::AppState;
-use serenity::{model::application::CommandInteraction, prelude::*};
+use serenity::{model::application::ComponentInteraction, prelude::*};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppState>>) -> BotResult {
+pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'_>, state: Arc<RwLock<AppState>>, _args: &[&str]) -> BotResult<()> {
     let guild_id = match cmd.guild_id {
         Some(id) => id,
         None => {
