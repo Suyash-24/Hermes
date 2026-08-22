@@ -11,11 +11,7 @@ pub mod queue;
 
 pub use queue::{GuildQueue, LoopMode, TrackInfo};
 
-use crate::music::lavalink::{
-    model::{
-        track::{TrackData, TrackInfo as LavaTrackInfo},
-    },
-};
+
 use serenity::model::id::GuildId;
 use std::sync::Arc;
 use tokio::sync::Mutex;
