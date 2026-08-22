@@ -3,7 +3,7 @@
 /// Builds the aesthetic Components v2 now-playing message used by /play,
 /// /nowplaying, and button refresh handlers.
 use crate::components::{
-    emoji::{format_duration_ms, header, hint, progress_bar, Colour, E},
+    emoji::{format_duration_ms, header, hint, progress_bar, E},
     v2::{ButtonStyle, FadeResponse},
 };
 use crate::music::{queue::LoopMode, TrackInfo};

@@ -16,8 +16,8 @@
 use crate::commands::music_cards::{
     build_error_card, build_now_playing_card, build_queue_card, build_success_card,
 };
-use crate::error::BotResult;
-use crate::music::{get_or_create_queue, lavalink as lava, queue::LoopMode};
+use crate::error::{BotError, BotResult};
+use crate::music::{get_or_create_queue, lavalink as lava};
 use crate::state::{AppState, LavalinkKey};
 use serenity::{model::application::ComponentInteraction, prelude::*};
 use std::sync::Arc;

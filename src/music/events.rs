@@ -3,8 +3,8 @@
 /// These are called by lavalink-rs when track events fire (end, error, stuck).
 /// The primary job is: when a track ends, pop the next track from the guild
 /// queue and play it.
-use crate::music::{get_or_create_queue, TrackInfo};
-use crate::state::{AppState, AppStateKey};
+use crate::music::get_or_create_queue;
+
 use lavalink_rs::{
     client::LavalinkClient,
     model::events::{TrackEnd, TrackException, TrackStuck},
@@ -143,7 +143,7 @@ async fn send_queue_ended(
     channel_id: serenity::model::id::ChannelId,
 ) -> Result<(), serenity::Error> {
     use crate::components::{
-        emoji::{header, Colour, E},
+        emoji::E,
         v2::{FadeResponse, respond_to_channel},
     };
 

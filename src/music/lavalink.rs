@@ -8,10 +8,10 @@ use lavalink_rs::{
     client::LavalinkClient,
     model::{
         search::SearchEngines,
-        track::{TrackData, TrackInfo as LavaTrackInfo},
+        track::TrackData,
     },
 };
-use serenity::model::id::{ChannelId, GuildId, UserId};
+use serenity::model::id::GuildId;
 
 // ── Search ────────────────────────────────────────────────────────────────────
 

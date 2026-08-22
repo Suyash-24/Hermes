@@ -1,10 +1,10 @@
 /// /lyrics [query] — fetch lyrics using the lyrics.ovh API.
 use crate::components::{
-    emoji::{header, hint, Colour, E},
+    emoji::{header, hint, E},
     v2::{FadeResponse},
 };
 use crate::error::BotResult;
-use crate::state::{AppState, LavalinkKey};
+use crate::state::AppState;
 use serenity::prelude::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
@@ -107,7 +107,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
 }
 
 fn error_card(msg: &str) -> FadeResponse {
-    use crate::components::emoji::Colour;
+    
     FadeResponse::new().ephemeral().container(None, |c| {
         c.text(format!("✗ {msg}"))
     })

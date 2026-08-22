@@ -7,7 +7,7 @@ use serenity::{
     prelude::*,
 };
 use crate::components::v2::{FadeResponse, respond_to_channel};
-use crate::error::BotResult;
+use crate::error::{BotError, BotResult};
 
 pub enum CommandContext<'a> {
     Slash(&'a CommandInteraction),

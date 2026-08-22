@@ -1,7 +1,7 @@
 /// Info refresh button handler.
 ///
 /// Rebuilds the `/info` card with live cache data and edits in place.
-use crate::components::emoji::{header, hint, stat, subheader, Colour, E};
+use crate::components::emoji::{header, hint, stat, subheader, E};
 use crate::components::v2::{ButtonStyle, FadeResponse, IS_COMPONENTS_V2};
 use crate::error::BotResult;
 use crate::state::AppState;

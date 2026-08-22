@@ -1,5 +1,5 @@
 /// /avatar [user] - display a user's avatar in full resolution.
-use crate::components::emoji::{header, hint, stat, Colour, E};
+use crate::components::emoji::{header, stat, E};
 use crate::components::v2::{ButtonStyle, FadeResponse};
 use crate::error::BotResult;
 use crate::state::AppState;

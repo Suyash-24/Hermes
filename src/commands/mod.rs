@@ -50,7 +50,7 @@ pub mod info;
 pub mod ping;
 
 
-use crate::error::BotResult;
+use crate::error::{BotError, BotResult};
 use crate::state::AppState;
 use serenity::{
     builder::{CreateCommand, CreateCommandOption},

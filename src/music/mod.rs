@@ -9,7 +9,7 @@ pub mod events;
 pub mod lavalink;
 pub mod queue;
 
-pub use queue::{GuildQueue, LoopMode, TrackInfo};
+pub use queue::{GuildQueue, TrackInfo};
 
 
 use serenity::model::id::GuildId;

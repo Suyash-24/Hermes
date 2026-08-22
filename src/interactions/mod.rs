@@ -24,7 +24,7 @@ pub mod music;
 pub mod ping;
 pub mod avatar;
 
-use crate::error::BotResult;
+use crate::error::{BotError, BotResult};
 use crate::state::AppState;
 use serenity::{
     model::application::{ComponentInteraction, ModalInteraction},

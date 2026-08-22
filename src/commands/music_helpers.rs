@@ -2,8 +2,8 @@
 ///
 /// Validates that a user is in a voice channel, optionally that the bot is
 /// already connected, and extracts the guild queue.
-use crate::error::BotResult;
-use crate::music::{get_or_create_queue, GuildQueue, QueueMap};
+use crate::error::{BotError, BotResult};
+use crate::music::{get_or_create_queue, GuildQueue};
 use crate::state::{AppState, LavalinkKey};
 use lavalink_rs::client::LavalinkClient;
 use serenity::{
