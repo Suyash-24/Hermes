@@ -7,7 +7,7 @@ use crate::music::get_or_create_queue;
 
 use lavalink_rs::{
     client::LavalinkClient,
-    model::events::{TrackEnd, TrackException, TrackStuck},
+    model::events::{TrackEnd, TrackException, TrackStart, TrackStuck},
 };
 use serenity::model::id::GuildId;
 use tracing::{error, info, warn};
