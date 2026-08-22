@@ -66,7 +66,7 @@ pub async fn run(
                     endpoint: conn_info.endpoint.clone(),
                     token: conn_info.token.clone(),
                     session_id: conn_info.session_id.clone(),
-                    channel_id: Some(mc.voice_channel),
+                    channel_id: Some(mc.voice_channel.into()),
                 };
                 
                 // Initialize the player context with the connection info
