@@ -17,6 +17,7 @@ mod interactions;
 mod logging;
 mod music;
 mod state;
+mod utils;
 
 use anyhow::{Context, Result};
 use lavalink_rs::{

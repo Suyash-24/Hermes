@@ -49,6 +49,10 @@ pub mod avatar;
 pub mod info;
 pub mod noprefix;
 pub mod setprefix;
+pub mod premium;
+pub mod serveravatar;
+pub mod serverbanner;
+pub mod serverbio;
 pub mod twenty_four_seven;
 pub mod ping;
 
@@ -80,7 +84,8 @@ pub async fn register_global(ctx: &Context) -> BotResult {
 
 fn all_command_names() -> &'static [&'static str] {
     &[
-        "ping", "info", "avatar",
+        "ping", "info", "avatar", "premium",
+        "serveravatar", "serverbanner", "serverbio",
         "play", "pause", "resume", "skip", "stop", "join", "leave",
         "queue", "nowplaying", "volume", "seek", "loop", "shuffle",
         "remove", "move", "clear", "lyrics",
@@ -102,6 +107,24 @@ fn build_commands() -> Vec<CreateCommand> {
                 CreateCommandOption::new(CommandOptionType::User, "user", "The user to show")
                     .required(false),
             ),
+            
+        CreateCommand::new("premium")
+            .description("Add or remove premium from a guild (Owner only)")
+            .add_option(CreateCommandOption::new(CommandOptionType::String, "action", "add/remove").required(true))
+            .add_option(CreateCommandOption::new(CommandOptionType::String, "guild", "Guild ID").required(true))
+            .add_option(CreateCommandOption::new(CommandOptionType::String, "duration", "Duration (e.g. 30d, lifetime)").required(false)),
+            
+        CreateCommand::new("serveravatar")
+            .description("Change the bot's server avatar (Premium & Admin)")
+            .add_option(CreateCommandOption::new(CommandOptionType::Attachment, "image", "The new avatar image").required(true)),
+            
+        CreateCommand::new("serverbanner")
+            .description("Change the bot's server banner (Premium & Admin)")
+            .add_option(CreateCommandOption::new(CommandOptionType::Attachment, "image", "The new banner image").required(true)),
+            
+        CreateCommand::new("serverbio")
+            .description("Change the bot's server bio (Premium & Admin)")
+            .add_option(CreateCommandOption::new(CommandOptionType::String, "text", "The new bio text").required(true)),
 
         // ── Music ─────────────────────────────────────────────────────────────
         CreateCommand::new("play")
@@ -226,6 +249,10 @@ pub async fn dispatch(
         "ping"        => ping::run(ctx, &ctx_cmd, state, args).await,
         "info"        => info::run(ctx, &ctx_cmd, state, args).await,
         "avatar"      => avatar::run(ctx, &ctx_cmd, state, args).await,
+        "premium"     => premium::run(ctx, &ctx_cmd, state, args).await,
+        "serveravatar" => serveravatar::run(ctx, &ctx_cmd, state, args).await,
+        "serverbanner" => serverbanner::run(ctx, &ctx_cmd, state, args).await,
+        "serverbio"   => serverbio::run(ctx, &ctx_cmd, state, args).await,
 
         // Music
         "play"        => play::run(ctx, &ctx_cmd, state, args).await,

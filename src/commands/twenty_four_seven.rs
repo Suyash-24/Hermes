@@ -43,6 +43,24 @@ pub async fn run(
         return Ok(());
     }
 
+    // Check for Premium
+    {
+        let state_read = state.read().await;
+        let db = state_read.db.read().await;
+        let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+        
+        let has_premium = match db.premium_guilds.get(&mc.guild_id.get()) {
+            Some(&expiration) => expiration == 0 || expiration > now,
+            None => false,
+        };
+
+        if !has_premium {
+            let card = build_error_card("This is a Premium feature! A bot owner must grant this server premium access using the `/premium` command.");
+            cmd.respond(ctx, &card).await?;
+            return Ok(());
+        }
+    }
+
     let is_now_enabled = {
         let state_read = state.read().await;
         let mut db = state_read.db.write().await;

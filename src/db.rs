@@ -14,6 +14,8 @@ pub struct Database {
     pub guild_prefixes: HashMap<u64, String>,
     /// Set of Guild IDs that have 24/7 mode enabled
     pub twenty_four_seven: HashSet<u64>,
+    /// Guild ID -> Expiration Timestamp (unix seconds). 0 = lifetime.
+    pub premium_guilds: HashMap<u64, u64>,
 }
 
 impl Database {

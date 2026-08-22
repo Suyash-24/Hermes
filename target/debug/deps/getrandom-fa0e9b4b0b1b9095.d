@@ -1,0 +1,10 @@
+D:\Suyash\Fade-closed\target\debug\deps\getrandom-fa0e9b4b0b1b9095.d: C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\lib.rs C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\backends.rs C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\error.rs C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\util.rs C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\../README.md C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\backends\windows.rs
+
+D:\Suyash\Fade-closed\target\debug\deps\libgetrandom-fa0e9b4b0b1b9095.rmeta: C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\lib.rs C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\backends.rs C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\error.rs C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\util.rs C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\../README.md C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\backends\windows.rs
+
+C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\lib.rs:
+C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\backends.rs:
+C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\error.rs:
+C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\util.rs:
+C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\../README.md:
+C:\Users\SUYASH\ NARAWADE\.cargo\registry\src\index.crates.io-1949cf8c6b5b557f\getrandom-0.4.2\src\backends\windows.rs:

@@ -29,10 +29,7 @@ lavalink-rs = { version = "0.15", default-features = false, features = [
 ] }
 
 # HTTP client (lyrics API, yt search)
-reqwest = { version = "0.12", default-features = false, features = [
-    "json",
-    "rustls-tls",
-] }
+reqwest = { version = "0.12", default-features = false, features = ["default", "json", "rustls-tls"] }
 
 # Async runtime
 tokio = { version = "1", features = ["macros", "rt-multi-thread", "signal"] }
@@ -63,6 +60,8 @@ regex = "1"
 urlencoding = "2"
 tokio-tungstenite = "0.21"
 songbird = "0.5"
+image = { version = "0.25.6", features = ["default", "gif"] }
+base64 = "0.23.1"
 
 [profile.release]
 opt-level = 3
