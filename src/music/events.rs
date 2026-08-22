@@ -52,7 +52,7 @@ pub fn track_end_event(
                 q.voice_channel
             };
             if let Some(vc_id) = vc {
-                crate::music::status::update_voice_status(&data.http, vc_id, &format!("▶️ {}", track.title)).await;
+                crate::music::status::update_voice_status(&data.http, vc_id, &track.title, None, Some("▶️")).await;
             }
 
             if let Err(e) = crate::music::lavalink::play_track(&client, guild_id, &track).await {
@@ -95,9 +95,9 @@ pub fn track_end_event(
                 };
                 
                 if is_24_7 {
-                    crate::music::status::update_voice_status(&data.http, vc_id, "Use play <song>").await;
+                    crate::music::status::update_voice_status(&data.http, vc_id, "Waiting for music...", None, Some("⏳")).await;
                 } else {
-                    crate::music::status::update_voice_status(&data.http, vc_id, "").await;
+                    crate::music::status::update_voice_status(&data.http, vc_id, "", None, None).await;
                     
                     let client_clone = client.clone();
                     let data_clone = data.clone();
