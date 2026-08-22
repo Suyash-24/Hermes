@@ -23,7 +23,8 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
 
     let is_24_7 = {
         let db = state.read().await;
-        db.db.read().await.twenty_four_seven.contains(&mc.guild_id.get())
+        let is_enabled = db.db.read().await.twenty_four_seven.contains(&mc.guild_id.get());
+        is_enabled
     };
 
     if !is_24_7 {
