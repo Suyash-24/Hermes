@@ -36,7 +36,7 @@ impl<'a> CommandContext<'a> {
         }
     }
 
-    pub fn member<'b>(&self, ctx: &'b Context) -> futures::future::BoxFuture<'b, serenity::Result<serenity::model::guild::Member>> {
+    pub fn member<'b>(&'b self, ctx: &'b Context) -> futures::future::BoxFuture<'b, serenity::Result<serenity::model::guild::Member>> {
         use futures::future::FutureExt;
         match self {
             Self::Slash(cmd) => async move {

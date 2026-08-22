@@ -22,9 +22,9 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
     lava::stop(&mc.lavalink, mc.guild_id).await?;
 
     let is_24_7 = {
-        let db = state.read().await;
-        let is_enabled = db.db.read().await.twenty_four_seven.contains(&mc.guild_id.get());
-        is_enabled
+        let app_state = state.read().await;
+        let db_lock = app_state.db.read().await;
+        db_lock.twenty_four_seven.contains(&mc.guild_id.get())
     };
 
     if !is_24_7 {

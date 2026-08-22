@@ -22,6 +22,7 @@ pub async fn run(
 
     let has_perms = match cmd.member(ctx).await {
         Ok(member) => {
+            #[allow(deprecated)]
             if let Ok(perms) = member.permissions(ctx) {
                 perms.contains(Permissions::MANAGE_GUILD)
             } else {
