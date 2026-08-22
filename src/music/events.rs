@@ -115,14 +115,16 @@ pub fn track_end_event(
                         if is_24_7 { return; }
                         
                         // Check if queue is still empty
-                        let is_empty = {
+                        let queue_arc = {
                             let state = data_clone.state.read().await;
-                            if let Some(q) = state.music_queues.get(&gid) {
-                                let q_lock = q.lock().await;
-                                q_lock.current.is_none()
-                            } else {
-                                true
-                            }
+                            state.music_queues.get(&gid).map(|ref_val| ref_val.value().clone())
+                        };
+                        
+                        let is_empty = if let Some(q) = &queue_arc {
+                            let q_lock = q.lock().await;
+                            q_lock.current.is_none()
+                        } else {
+                            true
                         };
                         
                         if is_empty {
@@ -130,8 +132,7 @@ pub fn track_end_event(
                             let _ = data_clone.manager.remove(gid).await;
                             
                             // Clear VC status and queue state
-                            let state = data_clone.state.read().await;
-                            if let Some(q) = state.music_queues.get(&gid) {
+                            if let Some(q) = queue_arc {
                                 let mut q_lock = q.lock().await;
                                 if let Some(vc) = q_lock.voice_channel {
                                     crate::music::status::update_voice_status(&data_clone.http, vc, "").await;
