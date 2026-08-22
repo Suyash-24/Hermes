@@ -6,7 +6,7 @@ use crate::components::emoji::{format_duration_ms, parse_timestamp, E};
 use crate::error::BotResult;
 use crate::music::lavalink as lava;
 use crate::state::AppState;
-use serenity::{model::application::prelude::*};
+use serenity::prelude::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 

@@ -4,7 +4,7 @@ use super::music_helpers::resolve_music_context;
 
 use crate::error::BotResult;
 use crate::state::AppState;
-use serenity::{model::application::prelude::*};
+use serenity::prelude::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 

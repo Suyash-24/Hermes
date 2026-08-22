@@ -6,7 +6,7 @@ use crate::components::emoji::E;
 use crate::error::BotResult;
 use crate::music::queue::LoopMode;
 use crate::state::AppState;
-use serenity::{model::application::prelude::*};
+use serenity::prelude::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 

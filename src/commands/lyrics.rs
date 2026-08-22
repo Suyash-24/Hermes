@@ -5,7 +5,7 @@ use crate::components::{
 };
 use crate::error::BotResult;
 use crate::state::{AppState, LavalinkKey};
-use serenity::{model::application::prelude::*};
+use serenity::prelude::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 

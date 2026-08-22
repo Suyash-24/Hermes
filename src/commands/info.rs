@@ -4,7 +4,7 @@ use crate::components::emoji::{header, hint, E};
 use crate::components::v2::{ButtonStyle, FadeResponse, IS_COMPONENTS_V2};
 use crate::error::BotResult;
 use crate::state::{AppState, ShardManagerKey};
-use serenity::{model::application::prelude::*};
+use serenity::prelude::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -25,7 +25,7 @@ pub async fn run(
 
 pub async fn handle_refresh(
     ctx: &Context,
-    component: &_state: Arc<RwLock<AppState>>,
+    component: &serenity::model::application::ComponentInteraction, _state: Arc<RwLock<AppState>>,
 ) -> BotResult {
     let response = build_info_response(ctx, component.guild_id).await;
     crate::interactions::edit_response(ctx, component, build_edit_body(&response)).await

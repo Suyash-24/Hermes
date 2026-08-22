@@ -59,7 +59,7 @@ impl<'a> CommandContext<'a> {
     pub async fn respond(&self, ctx: &Context, card: &FadeResponse) -> BotResult<()> {
         match self {
             Self::Slash(cmd) => {
-                (&ctx.http, cmd.id.get(), &cmd.token, card)
+                crate::components::v2::respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, card)
                     .await.map_err(BotError::Discord)?;
             }
             Self::Prefix(msg) => {
@@ -72,7 +72,7 @@ impl<'a> CommandContext<'a> {
     pub async fn edit(&self, ctx: &Context, card: &FadeResponse) -> BotResult<Message> {
         match self {
             Self::Slash(cmd) => {
-                (&ctx.http, &cmd.token, card)
+                crate::components::v2::edit_interaction_response(&ctx.http, &cmd.token, card)
                     .await.map_err(BotError::Discord)
             }
             Self::Prefix(msg) => {

@@ -4,7 +4,7 @@ use crate::components::emoji::{header, stat, E};
 use crate::components::v2::{ButtonStyle, FadeResponse, IS_COMPONENTS_V2};
 use crate::error::BotResult;
 use crate::state::{AppState, ShardManagerKey};
-use serenity::{model::application::prelude::*};
+use serenity::prelude::*;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
@@ -74,7 +74,7 @@ pub async fn run(
 
 pub async fn handle_refresh(
     ctx: &Context,
-    component: &_state: Arc<RwLock<AppState>>,
+    component: &serenity::model::application::ComponentInteraction, _state: Arc<RwLock<AppState>>,
 ) -> BotResult {
     let latency_display = {
         let data = ctx.data.read().await;
