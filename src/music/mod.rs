@@ -25,8 +25,8 @@ pub fn set_voice_state(
     let payload = serde_json::json!({
         "op": 4,
         "d": {
-            "guild_id": guild_id.get().to_string(),
-            "channel_id": channel_id.map(|c| c.get().to_string()),
+            "guild_id": guild_id.get(),
+            "channel_id": channel_id.map(|c| c.get()),
             "self_mute": false,
             "self_deaf": false,
         }

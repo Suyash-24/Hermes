@@ -61,19 +61,23 @@ pub async fn run(
 
         // Poll until Lavalink has fully completed the voice handshake
         // and created the player context (max 5 seconds).
-        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(5);
-        loop {
-            if mc.lavalink.get_player_context(mc.guild_id).is_some() {
-                break;
-            }
-            if std::time::Instant::now() >= deadline {
+        let conn_info = match mc.lavalink.get_connection_info(mc.guild_id, std::time::Duration::from_secs(5)).await {
+            Ok(c) => c,
+            Err(_) => {
                 let card = build_error_card("Could not connect to voice channel — Lavalink timed out. Please try again.");
                 edit_interaction_response(&ctx.http, &cmd.token, &card)
                     .await
                     .map_err(BotError::Discord)?;
                 return Ok(());
             }
-            tokio::time::sleep(std::time::Duration::from_millis(200)).await;
+        };
+
+        if let Err(e) = mc.lavalink.create_player_context(mc.guild_id, conn_info).await {
+            let card = build_error_card(&format!("Failed to create player context: {}", e));
+            edit_interaction_response(&ctx.http, &cmd.token, &card)
+                .await
+                .map_err(BotError::Discord)?;
+            return Ok(());
         }
 
         let mut q = mc.queue.lock().await;
