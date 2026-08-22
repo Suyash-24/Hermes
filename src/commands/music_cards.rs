@@ -143,7 +143,7 @@ pub fn build_error_card(message: &str) -> FadeResponse {
 /// Build a success card.
 pub fn build_success_card(message: &str) -> FadeResponse {
     FadeResponse::new().container(None, |c| {
-        c.text(format!("{} {}", E::OK, message))
+        c.text(message)
     })
 }
 
