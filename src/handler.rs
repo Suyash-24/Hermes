@@ -59,17 +59,26 @@ impl EventHandler for Handler {
 
                 if let Err(e) = crate::commands::dispatch(&ctx, &cmd, state).await {
                     error!(command = %name, error = %e, "Command handler failed");
-                    // Attempt to tell the user something went wrong.
-                    let _ = cmd
-                        .create_response(
+                    // Try editing deferred response first; if that fails, try creating a new one.
+                    let edited = cmd
+                        .edit_response(
                             &ctx,
-                            serenity::builder::CreateInteractionResponse::Message(
-                                serenity::builder::CreateInteractionResponseMessage::new()
-                                    .content("⚠️ Something went wrong. Please try again.")
-                                    .ephemeral(true),
-                            ),
+                            serenity::builder::EditInteractionResponse::new()
+                                .content("⚠️ Something went wrong. Please try again."),
                         )
                         .await;
+                    if edited.is_err() {
+                        let _ = cmd
+                            .create_response(
+                                &ctx,
+                                serenity::builder::CreateInteractionResponse::Message(
+                                    serenity::builder::CreateInteractionResponseMessage::new()
+                                        .content("⚠️ Something went wrong. Please try again.")
+                                        .ephemeral(true),
+                                ),
+                            )
+                            .await;
+                    }
                 }
             }
 

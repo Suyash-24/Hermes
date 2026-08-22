@@ -59,9 +59,11 @@ pub async fn run(
         // Use songbird to join the voice channel
         let manager = songbird::get(ctx).await.expect("Songbird client placed in at initialization").clone();
         let handler = manager.join_gateway(mc.guild_id, mc.voice_channel).await;
+        tracing::info!("Songbird join_gateway result: {:?}", handler.as_ref().map(|_| "Ok").unwrap_or("Err"));
 
         match handler {
             Ok((conn_info, _)) => {
+                tracing::info!(endpoint = %conn_info.endpoint, session_id = %conn_info.session_id, "Songbird connected");
                 let lava_conn = lavalink_rs::model::player::ConnectionInfo {
                     endpoint: conn_info.endpoint.clone(),
                     token: conn_info.token.clone(),
@@ -71,6 +73,7 @@ pub async fn run(
                 
                 // Initialize the player context with the connection info
                 if let Err(e) = mc.lavalink.create_player_context(mc.guild_id, lava_conn).await {
+                    tracing::error!("create_player_context failed: {e}");
                     let card = build_error_card(&format!("Failed to create player context: {}", e));
                     edit_interaction_response(&ctx.http, &cmd.token, &card)
                         .await
@@ -79,6 +82,7 @@ pub async fn run(
                 }
             }
             Err(why) => {
+                tracing::error!("Songbird join_gateway error: {why}");
                 let card = build_error_card(&format!("Could not connect to voice channel: {}", why));
                 edit_interaction_response(&ctx.http, &cmd.token, &card)
                     .await
