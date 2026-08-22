@@ -54,20 +54,33 @@ pub async fn run(
     } else {
         args[0].to_string()
     };
-    if new_prefix.len() > 5 {
+
+    if new_prefix.len() > 5 && new_prefix.to_lowercase() != "default" && new_prefix.to_lowercase() != "reset" && new_prefix.to_lowercase() != "remove" {
         let card = build_error_card("Prefix cannot be longer than 5 characters.");
         cmd.respond(ctx, &card).await?;
         return Ok(());
     }
 
+    let is_reset = matches!(new_prefix.to_lowercase().as_str(), "default" | "reset" | "remove");
+
     {
         let state_read = state.read().await;
         let mut db = state_read.db.write().await;
-        db.guild_prefixes.insert(guild_id.get(), new_prefix.clone());
+        if is_reset {
+            db.guild_prefixes.remove(&guild_id.get());
+        } else {
+            db.guild_prefixes.insert(guild_id.get(), new_prefix.clone());
+        }
         db.save();
     }
 
-    let card = build_success_card(&format!("✅ Server prefix has been set to `{}`\n(The default prefix will also still work).", new_prefix));
+    let msg = if is_reset {
+        "✅ Server prefix has been reset to the default.".to_string()
+    } else {
+        format!("✅ Server prefix has been set to `{}`\n(The default prefix will also still work).", new_prefix)
+    };
+
+    let card = build_success_card(&msg);
     cmd.respond(ctx, &card).await?;
 
     Ok(())

@@ -61,7 +61,11 @@ pub async fn run(
 
     let duration_str = if duration_arg.is_empty() { "60d".to_string() } else { duration_arg.to_lowercase() };
 
-    let expires_at = if duration_str == "lifetime" {
+    let is_remove = duration_str == "remove";
+
+    let expires_at = if is_remove {
+        0
+    } else if duration_str == "lifetime" {
         0
     } else {
         let duration_secs = parse_duration(&duration_str).unwrap_or(60 * 24 * 60 * 60); // default 60 days
@@ -72,11 +76,17 @@ pub async fn run(
     {
         let state_read = state.read().await;
         let mut db = state_read.db.write().await;
-        db.noprefix.insert(target_id, expires_at);
+        if is_remove {
+            db.noprefix.remove(&target_id);
+        } else {
+            db.noprefix.insert(target_id, expires_at);
+        }
         db.save();
     }
 
-    let msg = if expires_at == 0 {
+    let msg = if is_remove {
+        format!("✅ <@{}> removed from the noprefix list.", target_id)
+    } else if expires_at == 0 {
         format!("✅ <@{}> added to the noprefix list for **lifetime**.", target_id)
     } else {
         format!("✅ <@{}> added to the noprefix list until <t:{}:R>.", target_id, expires_at)
