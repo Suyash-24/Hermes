@@ -151,9 +151,12 @@ pub async fn run(
             };
 
             let card = build_now_playing_card(&first, 0, loop_mode, shuffled, volume, count.saturating_sub(1), false);
-            edit_interaction_response(&ctx.http, &cmd.token, &card)
+            let msg = edit_interaction_response(&ctx.http, &cmd.token, &card)
                 .await
                 .map_err(BotError::Discord)?;
+            
+            let mut q = mc.queue.lock().await;
+            q.now_playing_msg = Some((msg.channel_id, msg.id));
         } else {
             let card = build_playlist_queued_card(&tracks);
             edit_interaction_response(&ctx.http, &cmd.token, &card)
@@ -178,9 +181,12 @@ pub async fn run(
             };
 
             let card = build_now_playing_card(&track, 0, loop_mode, shuffled, volume, 0, false);
-            edit_interaction_response(&ctx.http, &cmd.token, &card)
+            let msg = edit_interaction_response(&ctx.http, &cmd.token, &card)
                 .await
                 .map_err(BotError::Discord)?;
+            
+            let mut q = mc.queue.lock().await;
+            q.now_playing_msg = Some((msg.channel_id, msg.id));
         } else {
             // Enqueue.
             let position = {

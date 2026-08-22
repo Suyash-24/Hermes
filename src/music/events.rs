@@ -26,6 +26,13 @@ pub fn track_end_event(
 
         info!(guild = %guild_id, reason = %reason, "Track ended");
 
+        // If a track was stopped intentionally or replaced by another track being played,
+        // we don't want to advance the queue automatically. The caller who stopped/replaced
+        // it is responsible for advancing the queue.
+        if reason.contains("Replaced") || reason.contains("Stopped") {
+            return;
+        }
+
         let user_data = client.data::<MusicEventData>();
         let Ok(data) = user_data else {
             warn!("No MusicEventData in lavalink client");

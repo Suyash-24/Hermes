@@ -266,6 +266,7 @@ async fn edit_with_card(
     }
 
     let body = serde_json::json!({
+        "content": null,
         "flags": flags,
         "components": card.components_value(),
     });

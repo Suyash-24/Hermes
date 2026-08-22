@@ -159,10 +159,13 @@ pub async fn handle_play(
                 (q.loop_mode, q.shuffle, q.volume)
             };
             let card = build_now_playing_card(&first, 0, loop_mode, shuffled, volume, count.saturating_sub(1), false);
-            send_card(ctx, msg, &card).await;
+            if let Ok(msg) = send_card(ctx, msg, &card).await {
+                let mut q = queue.lock().await;
+                q.now_playing_msg = Some((msg.channel_id, msg.id));
+            }
         } else {
             let card = build_playlist_queued_card(&tracks);
-            send_card(ctx, msg, &card).await;
+            let _ = send_card(ctx, msg, &card).await;
         }
     } else {
         let track = tracks.into_iter().next().unwrap();
@@ -180,7 +183,10 @@ pub async fn handle_play(
                 (q.loop_mode, q.shuffle, q.volume)
             };
             let card = build_now_playing_card(&track, 0, loop_mode, shuffled, volume, 0, false);
-            send_card(ctx, msg, &card).await;
+            if let Ok(m) = send_card(ctx, msg, &card).await {
+                let mut q = queue.lock().await;
+                q.now_playing_msg = Some((m.channel_id, m.id));
+            }
         } else {
             let position = {
                 let mut q = queue.lock().await;
@@ -188,18 +194,13 @@ pub async fn handle_play(
                 q.tracks.len()
             };
             let card = build_queued_card(&track, position);
-            send_card(ctx, msg, &card).await;
+            let _ = send_card(ctx, msg, &card).await;
         }
     }
 }
 
 /// Send a FadeResponse card as a regular channel message using components v2.
-async fn send_card(ctx: &Context, msg: &Message, card: &FadeResponse) {
-    let map = serde_json::json!({
-        "content": "",
-        "components": card.components_value(),
-        "flags": IS_COMPONENTS_V2,
-    });
-    let _ = ctx.http.send_message(msg.channel_id, vec![], &map).await;
+async fn send_card(ctx: &Context, msg: &Message, card: &FadeResponse) -> Result<Message, serenity::Error> {
+    crate::components::v2::respond_to_channel(&ctx.http, msg.channel_id, card).await
 }
 

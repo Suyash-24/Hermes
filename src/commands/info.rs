@@ -34,7 +34,7 @@ pub async fn handle_refresh(
 
 fn build_edit_body(response: &FadeResponse) -> serde_json::Value {
     serde_json::json!({
-        "flags":      IS_COMPONENTS_V2,
+        "content": null, "flags": IS_COMPONENTS_V2,
         "components": response.components_value(),
     })
 }

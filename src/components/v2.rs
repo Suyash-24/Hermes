@@ -131,6 +131,7 @@ impl FadeResponse {
         json!({
             "type": 4,           // CHANNEL_MESSAGE_WITH_SOURCE
             "data": {
+                "content": null,
                 "flags": flags,
                 "components": self.components,
             }
@@ -438,6 +439,7 @@ pub async fn edit_interaction_response(
         flags |= 64;
     }
     let body = serde_json::json!({
+        "content": null,
         "flags": flags,
         "components": response.components_value(),
     });
@@ -454,6 +456,7 @@ pub async fn respond_to_channel(
 ) -> Result<serenity::model::channel::Message, serenity::Error> {
     let flags = IS_COMPONENTS_V2;
     let body = serde_json::json!({
+        "content": null,
         "flags": flags,
         "components": response.components_value(),
     });
@@ -470,6 +473,7 @@ pub async fn edit_channel_message(
 ) -> Result<(), serenity::Error> {
     let flags = IS_COMPONENTS_V2;
     let body = serde_json::json!({
+        "content": null,
         "flags": flags,
         "components": response.components_value(),
     });
