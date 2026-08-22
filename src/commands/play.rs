@@ -60,8 +60,8 @@ pub async fn run(
         // Tell Discord gateway to join the voice channel.
         crate::music::set_voice_state(ctx, mc.guild_id, Some(mc.voice_channel));
 
-        // Give Lavalink a moment to receive the voice gateway events.
-        tokio::time::sleep(std::time::Duration::from_millis(500)).await;
+        // Give Lavalink a moment to receive the voice gateway events and handshake.
+        tokio::time::sleep(std::time::Duration::from_millis(1500)).await;
 
         let mut q = mc.queue.lock().await;
         q.voice_channel = Some(mc.voice_channel);

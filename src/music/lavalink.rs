@@ -147,10 +147,6 @@ pub async fn play_track(
     track: &TrackInfo,
 ) -> BotResult<()> {
     let ctx = lavalink.get_player_context(guild_id)
-        .or_else(|| {
-            lavalink.create_player_context(guild_id);
-            lavalink.get_player_context(guild_id)
-        })
         .ok_or_else(|| BotError::Lavalink("No player context".into()))?;
     ctx.play_now(&lavalink_rs::model::track::TrackData {
             encoded: track.encoded.clone(),
