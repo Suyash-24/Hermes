@@ -1,10 +1,11 @@
 /// /ping — Check Fade's latency and shard info.
 /// /ping refresh button interaction handler.
-use crate::components::emoji::{header, hint, stat, Colour, E};
+use crate::components::emoji::{header, stat, E};
 use crate::components::v2::{ButtonStyle, FadeResponse, IS_COMPONENTS_V2, respond_to_interaction};
 use crate::error::{BotError, BotResult};
-use crate::state::AppState;
+use crate::state::{AppState, ShardManagerKey};
 use serenity::{model::application::{CommandInteraction, ComponentInteraction}, prelude::*};
+use serenity::gateway::ShardId;
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
@@ -16,12 +17,19 @@ pub async fn run(
     cmd: &CommandInteraction,
     _state: Arc<RwLock<AppState>>,
 ) -> BotResult {
-    let latency_display = ctx
-        .runner_info()
-        .await
-        .and_then(|info| info.latency)
-        .map(|d| format!("{}ms", d.as_millis()))
-        .unwrap_or_else(|| String::from("Measuring..."));
+    let latency_display = {
+        let data = ctx.data.read().await;
+        if let Some(shard_mgr) = data.get::<ShardManagerKey>() {
+            let runners = shard_mgr.runners.lock().await;
+            runners
+                .get(&ShardId(ctx.shard_id.0))
+                .and_then(|r| r.latency)
+                .map(|d| format!("{}ms", d.as_millis()))
+                .unwrap_or_else(|| String::from("Measuring..."))
+        } else {
+            String::from("Unavailable")
+        }
+    };
 
     let now_ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)
@@ -57,12 +65,19 @@ pub async fn handle_refresh(
     component: &ComponentInteraction,
     _state: Arc<RwLock<AppState>>,
 ) -> BotResult {
-    let latency_display = ctx
-        .runner_info()
-        .await
-        .and_then(|info| info.latency)
-        .map(|d| format!("{}ms", d.as_millis()))
-        .unwrap_or_else(|| String::from("Measuring..."));
+    let latency_display = {
+        let data = ctx.data.read().await;
+        if let Some(shard_mgr) = data.get::<ShardManagerKey>() {
+            let runners = shard_mgr.runners.lock().await;
+            runners
+                .get(&ShardId(ctx.shard_id.0))
+                .and_then(|r| r.latency)
+                .map(|d| format!("{}ms", d.as_millis()))
+                .unwrap_or_else(|| String::from("Measuring..."))
+        } else {
+            String::from("Unavailable")
+        }
+    };
 
     let now_ts = SystemTime::now()
         .duration_since(UNIX_EPOCH)

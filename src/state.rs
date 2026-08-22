@@ -74,3 +74,10 @@ pub struct LavalinkKey;
 impl TypeMapKey for LavalinkKey {
     type Value = LavalinkClient;
 }
+
+/// Key used to store the `ShardManager` inside serenity's `TypeMap`.
+pub struct ShardManagerKey;
+
+impl TypeMapKey for ShardManagerKey {
+    type Value = std::sync::Arc<serenity::gateway::ShardManager>;
+}

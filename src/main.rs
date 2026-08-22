@@ -27,7 +27,7 @@ use serenity::{
     model::gateway::GatewayIntents,
     Client,
 };
-use state::{AppState, AppStateKey, LavalinkKey};
+use state::{AppState, AppStateKey, LavalinkKey, ShardManagerKey};
 use std::sync::Arc;
 use tracing::info;
 
@@ -99,6 +99,7 @@ async fn main() -> Result<()> {
         let mut data = client.data.write().await;
         data.insert::<AppStateKey>(Arc::clone(&state));
         data.insert::<LavalinkKey>(lavalink);
+        data.insert::<ShardManagerKey>(Arc::clone(&client.shard_manager));
     }
 
     // ── 8. Start gateway + graceful shutdown ──────────────────────────────────
