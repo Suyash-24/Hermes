@@ -25,6 +25,7 @@ lavalink-rs = { version = "0.15", default-features = false, features = [
     "serenity",
     "tokio-tungstenite",
     "tungstenite-rustls-webpki-roots",
+    "songbird",
 ] }
 
 # HTTP client (lyrics API, yt search)
