@@ -48,9 +48,9 @@ pub mod volume;
 pub mod avatar;
 pub mod info;
 pub mod ping;
-pub mod prefix;
 
-use crate::error::{BotError, BotResult};
+
+use crate::error::BotResult;
 use crate::state::AppState;
 use serenity::{
     builder::{CreateCommand, CreateCommandOption},
@@ -215,31 +215,33 @@ pub async fn dispatch(
     ctx: &Context,
     cmd: &CommandInteraction,
     state: Arc<RwLock<AppState>>,
-) -> BotResult {
+) -> BotResult<()> {
+    let ctx_cmd = crate::commands::context::CommandContext::Slash(cmd);
+    let args: &[&str] = &[];
     match cmd.data.name.as_str() {
         // Utility
-        "ping"        => ping::run(ctx, cmd, state).await,
-        "info"        => info::run(ctx, cmd, state).await,
-        "avatar"      => avatar::run(ctx, cmd, state).await,
+        "ping"        => ping::run(ctx, &ctx_cmd, state, args).await,
+        "info"        => info::run(ctx, &ctx_cmd, state, args).await,
+        "avatar"      => avatar::run(ctx, &ctx_cmd, state, args).await,
 
         // Music
-        "play"        => play::run(ctx, cmd, state).await,
-        "pause"       => pause::run(ctx, cmd, state).await,
-        "resume"      => resume::run(ctx, cmd, state).await,
-        "skip"        => skip::run(ctx, cmd, state).await,
-        "stop"        => stop::run(ctx, cmd, state).await,
-        "join"        => join::run(ctx, cmd, state).await,
-        "leave"       => leave::run(ctx, cmd, state).await,
-        "queue"       => queue_cmd::run(ctx, cmd, state).await,
-        "nowplaying"  => nowplaying::run(ctx, cmd, state).await,
-        "volume"      => volume::run(ctx, cmd, state).await,
-        "seek"        => seek::run(ctx, cmd, state).await,
-        "loop"        => loop_cmd::run(ctx, cmd, state).await,
-        "shuffle"     => shuffle::run(ctx, cmd, state).await,
-        "remove"      => remove::run(ctx, cmd, state).await,
-        "move"        => move_cmd::run(ctx, cmd, state).await,
-        "clear"       => clear::run(ctx, cmd, state).await,
-        "lyrics"      => lyrics::run(ctx, cmd, state).await,
+        "play"        => play::run(ctx, &ctx_cmd, state, args).await,
+        "pause"       => pause::run(ctx, &ctx_cmd, state, args).await,
+        "resume"      => resume::run(ctx, &ctx_cmd, state, args).await,
+        "skip"        => skip::run(ctx, &ctx_cmd, state, args).await,
+        "stop"        => stop::run(ctx, &ctx_cmd, state, args).await,
+        "join"        => join::run(ctx, &ctx_cmd, state, args).await,
+        "leave"       => leave::run(ctx, &ctx_cmd, state, args).await,
+        "queue"       => queue_cmd::run(ctx, &ctx_cmd, state, args).await,
+        "nowplaying"  => nowplaying::run(ctx, &ctx_cmd, state, args).await,
+        "volume"      => volume::run(ctx, &ctx_cmd, state, args).await,
+        "seek"        => seek::run(ctx, &ctx_cmd, state, args).await,
+        "loop"        => loop_cmd::run(ctx, &ctx_cmd, state, args).await,
+        "shuffle"     => shuffle::run(ctx, &ctx_cmd, state, args).await,
+        "remove"      => remove::run(ctx, &ctx_cmd, state, args).await,
+        "move"        => move_cmd::run(ctx, &ctx_cmd, state, args).await,
+        "clear"       => clear::run(ctx, &ctx_cmd, state, args).await,
+        "lyrics"      => lyrics::run(ctx, &ctx_cmd, state, args).await,
 
         name => Err(BotError::UnknownCommand(name.to_string())),
     }

@@ -6,8 +6,8 @@ use serenity::{
     },
     prelude::*,
 };
-use crate::components::v2::{FadeResponse, respond_to_interaction, respond_to_channel, edit_interaction_response};
-use crate::error::{BotError, BotResult};
+use crate::components::v2::{FadeResponse, respond_to_channel};
+use crate::error::BotResult;
 
 pub enum CommandContext<'a> {
     Slash(&'a CommandInteraction),
@@ -59,7 +59,7 @@ impl<'a> CommandContext<'a> {
     pub async fn respond(&self, ctx: &Context, card: &FadeResponse) -> BotResult<()> {
         match self {
             Self::Slash(cmd) => {
-                respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, card)
+                (&ctx.http, cmd.id.get(), &cmd.token, card)
                     .await.map_err(BotError::Discord)?;
             }
             Self::Prefix(msg) => {
@@ -72,7 +72,7 @@ impl<'a> CommandContext<'a> {
     pub async fn edit(&self, ctx: &Context, card: &FadeResponse) -> BotResult<Message> {
         match self {
             Self::Slash(cmd) => {
-                edit_interaction_response(&ctx.http, &cmd.token, card)
+                (&ctx.http, &cmd.token, card)
                     .await.map_err(BotError::Discord)
             }
             Self::Prefix(msg) => {

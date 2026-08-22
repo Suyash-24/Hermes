@@ -4,8 +4,8 @@
 /// Adds to queue if something is already playing.
 use super::music_cards::{build_error_card, build_now_playing_card, build_playlist_queued_card, build_queued_card};
 use super::music_helpers::resolve_music_context;
-use crate::components::v2::edit_interaction_response;
-use crate::error::{BotError, BotResult};
+
+use crate::error::BotResult;
 use crate::music::{lavalink as lava, queue::LoopMode};
 use crate::state::AppState;
 use serenity::prelude::*;

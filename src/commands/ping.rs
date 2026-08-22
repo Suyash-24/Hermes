@@ -1,10 +1,10 @@
 /// /ping — Check Fade's latency and shard info.
 /// /ping refresh button interaction handler.
 use crate::components::emoji::{header, stat, E};
-use crate::components::v2::{ButtonStyle, FadeResponse, IS_COMPONENTS_V2, respond_to_interaction};
-use crate::error::{BotError, BotResult};
+use crate::components::v2::{ButtonStyle, FadeResponse, IS_COMPONENTS_V2};
+use crate::error::BotResult;
 use crate::state::{AppState, ShardManagerKey};
-use serenity::{model::application::ComponentInteraction, prelude::*};
+use serenity::{model::application::prelude::*};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
@@ -74,8 +74,7 @@ pub async fn run(
 
 pub async fn handle_refresh(
     ctx: &Context,
-    component: &ComponentInteraction,
-    _state: Arc<RwLock<AppState>>,
+    component: &_state: Arc<RwLock<AppState>>,
 ) -> BotResult {
     let latency_display = {
         let data = ctx.data.read().await;

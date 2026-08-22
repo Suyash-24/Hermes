@@ -1,10 +1,10 @@
 /// /queue [page] — show the current queue with pagination.
 use super::music_cards::{build_error_card, build_queue_card};
 use super::music_helpers::resolve_music_context;
-use crate::components::v2::respond_to_interaction;
-use crate::error::{BotError, BotResult};
+
+use crate::error::BotResult;
 use crate::state::AppState;
-use serenity::{model::application::ComponentInteraction, prelude::*};
+use serenity::{model::application::prelude::*};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -20,11 +20,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         }
     };
 
-    let page = cmd
-        .data
-        .options
-        .first()
-        .and_then(|o| o.value.as_i64())
+    let page = match cmd { crate::commands::context::CommandContext::Slash(c) => c.data.options().iter().find_map(|opt| match &opt.value { serenity::model::application::ResolvedValue::Integer(i) => Some(*i), _ => None }), crate::commands::context::CommandContext::Prefix(_) => _args.first().and_then(|s| s.parse::<i64>().ok()) }
         .unwrap_or(1)
         .max(1) as usize - 1; // convert 1-based to 0-based
 

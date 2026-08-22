@@ -1,10 +1,10 @@
 /// /avatar [user] - display a user's avatar in full resolution.
 use crate::components::emoji::{header, hint, stat, Colour, E};
-use crate::components::v2::{respond_to_interaction, ButtonStyle, FadeResponse};
-use crate::error::{BotError, BotResult};
+use crate::components::v2::{ButtonStyle, FadeResponse};
+use crate::error::BotResult;
 use crate::state::AppState;
 use serenity::{
-    model::application::{ComponentInteraction, ResolvedOption, ResolvedValue},
+    model::application::{ResolvedOption, ResolvedValue},
     prelude::*,
 };
 use std::sync::Arc;

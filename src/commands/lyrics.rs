@@ -1,11 +1,11 @@
 /// /lyrics [query] — fetch lyrics using the lyrics.ovh API.
 use crate::components::{
     emoji::{header, hint, Colour, E},
-    v2::{FadeResponse, respond_to_interaction},
+    v2::{FadeResponse},
 };
-use crate::error::{BotError, BotResult};
+use crate::error::BotResult;
 use crate::state::{AppState, LavalinkKey};
-use serenity::{model::application::ComponentInteraction, prelude::*};
+use serenity::{model::application::prelude::*};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -19,7 +19,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
     cmd.defer(ctx).await?;
 
     // Try to get the query from the option, or fall back to current track.
-    let query = match cmd { crate::commands::context::CommandContext::Slash(c) => c.data.options().iter().find_map(|opt| match &opt.value { serenity::model::application::ResolvedValue::String(s) => Some(s.as_str()), _ => None }), crate::commands::context::CommandContext::Prefix(_) => _args.first().copied() }
+    let query = match cmd { crate::commands::context::CommandContext::Slash(c) => c.data.options().iter().find_map(|opt| match &opt.value { serenity::model::application::ResolvedValue::String(s) => Some(*s), _ => None }), crate::commands::context::CommandContext::Prefix(_) => _args.first().copied() }
         .map(|s| s.to_string());
 
     let (artist, title) = if let Some(q) = query {

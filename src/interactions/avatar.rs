@@ -1,6 +1,6 @@
 use crate::components::emoji::{header, stat, E};
 use crate::components::v2::{ButtonStyle, FadeResponse};
-use crate::error::{BotError, BotResult};
+use crate::error::BotResult;
 use serenity::{
     model::application::ComponentInteraction,
     model::id::UserId,

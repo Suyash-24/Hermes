@@ -2,9 +2,9 @@
 /// Also contains the info refresh button handler.
 use crate::components::emoji::{header, hint, E};
 use crate::components::v2::{ButtonStyle, FadeResponse, IS_COMPONENTS_V2};
-use crate::error::{BotError, BotResult};
+use crate::error::BotResult;
 use crate::state::{AppState, ShardManagerKey};
-use serenity::{model::application::ComponentInteraction, prelude::*};
+use serenity::{model::application::prelude::*};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -25,8 +25,7 @@ pub async fn run(
 
 pub async fn handle_refresh(
     ctx: &Context,
-    component: &ComponentInteraction,
-    _state: Arc<RwLock<AppState>>,
+    component: &_state: Arc<RwLock<AppState>>,
 ) -> BotResult {
     let response = build_info_response(ctx, component.guild_id).await;
     crate::interactions::edit_response(ctx, component, build_edit_body(&response)).await
@@ -43,7 +42,7 @@ fn build_edit_body(response: &FadeResponse) -> serde_json::Value {
 
 async fn build_info_response(
     ctx: &Context,
-    guild_id: Option<serenity::model::id::GuildId>,
+    _guild_id: Option<serenity::model::id::GuildId>,
 ) -> FadeResponse {
     let bot_user    = ctx.cache.current_user().clone();
     let guild_count = ctx.cache.guild_count();

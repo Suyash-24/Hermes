@@ -2,11 +2,11 @@
 use super::music_cards::{build_error_card, build_success_card};
 use super::music_helpers::resolve_music_context;
 use crate::components::emoji::{format_duration_ms, parse_timestamp, E};
-use crate::components::v2::respond_to_interaction;
-use crate::error::{BotError, BotResult};
+
+use crate::error::BotResult;
 use crate::music::lavalink as lava;
 use crate::state::AppState;
-use serenity::{model::application::ComponentInteraction, prelude::*};
+use serenity::{model::application::prelude::*};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -20,7 +20,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         }
     };
 
-    let ts_str = match cmd { crate::commands::context::CommandContext::Slash(c) => c.data.options().iter().find_map(|opt| match &opt.value { serenity::model::application::ResolvedValue::String(s) => Some(s.as_str()), _ => None }), crate::commands::context::CommandContext::Prefix(_) => _args.first().copied() }
+    let ts_str = match cmd { crate::commands::context::CommandContext::Slash(c) => c.data.options().iter().find_map(|opt| match &opt.value { serenity::model::application::ResolvedValue::String(s) => Some(*s), _ => None }), crate::commands::context::CommandContext::Prefix(_) => _args.first().copied() }
         .unwrap_or("");
 
     let position_ms = match parse_timestamp(ts_str) {

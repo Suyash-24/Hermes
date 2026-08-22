@@ -2,11 +2,11 @@
 use super::music_cards::{build_error_card, build_success_card};
 use super::music_helpers::resolve_music_context;
 use crate::components::emoji::E;
-use crate::components::v2::respond_to_interaction;
-use crate::error::{BotError, BotResult};
+
+use crate::error::BotResult;
 use crate::music::queue::LoopMode;
 use crate::state::AppState;
-use serenity::{model::application::ComponentInteraction, prelude::*};
+use serenity::{model::application::prelude::*};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -20,7 +20,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         }
     };
 
-    let mode_str = match cmd { crate::commands::context::CommandContext::Slash(c) => c.data.options().iter().find_map(|opt| match &opt.value { serenity::model::application::ResolvedValue::String(s) => Some(s.as_str()), _ => None }), crate::commands::context::CommandContext::Prefix(_) => _args.first().copied() };
+    let mode_str = match cmd { crate::commands::context::CommandContext::Slash(c) => c.data.options().iter().find_map(|opt| match &opt.value { serenity::model::application::ResolvedValue::String(s) => Some(*s), _ => None }), crate::commands::context::CommandContext::Prefix(_) => _args.first().copied() };
 
     let new_mode = {
         let mut q = mc.queue.lock().await;

@@ -1,8 +1,8 @@
 /// /skip [count] — skip current track or the next N tracks.
 use super::music_cards::{build_error_card, build_now_playing_card, build_success_card};
 use super::music_helpers::resolve_music_context;
-use crate::components::v2::respond_to_interaction;
-use crate::error::{BotError, BotResult};
+
+use crate::error::BotResult;
 use crate::music::lavalink as lava;
 use crate::state::AppState;
 use serenity::prelude::*;
