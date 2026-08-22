@@ -218,7 +218,7 @@ impl EventHandler for Handler {
                 "clear"       => crate::commands::clear::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "noprefix"    => crate::commands::noprefix::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "setprefix"   => crate::commands::setprefix::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
-                "24/7"        => crate::commands::twenty_four_seven::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "24/7" | "247" => crate::commands::twenty_four_seven::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "lyrics"      => crate::commands::lyrics::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 
                 _ => return, // Unknown command
