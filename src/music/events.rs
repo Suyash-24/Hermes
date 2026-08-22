@@ -89,8 +89,9 @@ pub fn track_end_event(
             
             if let Some(vc_id) = voice_channel {
                 let is_24_7 = {
-                    let db = data.state.read().await;
-                    db.db.read().await.twenty_four_seven.contains(&guild_id.get())
+                    let app_state = data.state.read().await;
+                    let is_enabled = app_state.db.read().await.twenty_four_seven.contains(&guild_id.get());
+                    is_enabled
                 };
                 
                 if is_24_7 {
