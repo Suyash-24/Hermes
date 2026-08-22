@@ -235,13 +235,15 @@ pub fn track_start_event(
         let user_data = client.data::<crate::MusicEventData>();
         let Ok(data) = user_data else { return; };
         
-        let vc = {
+        let queue_arc = {
             let state_lock = data.state.read().await;
-            if let Some(queue_arc) = state_lock.music_queues.get(&guild_id) {
-                queue_arc.lock().await.voice_channel
-            } else {
-                None
-            }
+            state_lock.music_queues.get(&guild_id).map(|ref_val| ref_val.value().clone())
+        };
+        
+        let vc = if let Some(q) = queue_arc {
+            q.lock().await.voice_channel
+        } else {
+            None
         };
         
         if let Some(vc_id) = vc {
