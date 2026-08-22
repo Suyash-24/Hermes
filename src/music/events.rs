@@ -47,6 +47,14 @@ pub fn track_end_event(
 
         if let Some(track) = next_track {
             info!(guild = %guild_id, title = %track.title, "Playing next track");
+            let vc = {
+                let q = queue_arc.lock().await;
+                q.voice_channel
+            };
+            if let Some(vc_id) = vc {
+                crate::music::status::update_voice_status(&data.http, vc_id, &format!("▶️ {}", track.title)).await;
+            }
+
             if let Err(e) = crate::music::lavalink::play_track(&client, guild_id, &track).await {
                 error!(guild = %guild_id, error = %e, "Failed to play next track");
             } else {
@@ -74,10 +82,28 @@ pub fn track_end_event(
             }
         } else {
             info!(guild = %guild_id, "Queue exhausted");
-            let text_channel = {
+            let (text_channel, voice_channel) = {
                 let queue = queue_arc.lock().await;
-                queue.text_channel
+                (queue.text_channel, queue.voice_channel)
             };
+            
+            if let Some(vc_id) = voice_channel {
+                let is_24_7 = {
+                    let db = data.state.read().await;
+                    db.db.read().await.twenty_four_seven.contains(&guild_id.get())
+                };
+                
+                if is_24_7 {
+                    crate::music::status::update_voice_status(&data.http, vc_id, "Use play <song>").await;
+                } else {
+                    crate::music::status::update_voice_status(&data.http, vc_id, "").await;
+                    let _ = client.destroy_player(guild_id).await;
+                    // Note: In events, we don't have access to songbird manager directly
+                    // However, we destroy the player. To actually leave the VC, we ideally need songbird,
+                    // but destroying the Lavalink player effectively ends the music session for now.
+                }
+            }
+
             if let Some(channel_id) = text_channel {
                 let _ = send_queue_ended(&data.http, channel_id).await;
             }

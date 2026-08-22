@@ -482,6 +482,7 @@ dependencies = [
  "dotenvy",
  "futures",
  "lavalink-rs",
+ "regex",
  "reqwest",
  "serde",
  "serde_json",

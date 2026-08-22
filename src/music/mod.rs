@@ -7,6 +7,7 @@
 /// - `MusicManager` — helper to look up queues from state
 pub mod events;
 pub mod lavalink;
+pub mod status;
 pub mod queue;
 
 pub use queue::{GuildQueue, TrackInfo};

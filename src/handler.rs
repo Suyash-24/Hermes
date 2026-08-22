@@ -154,7 +154,32 @@ impl EventHandler for Handler {
             s.config.bot.prefix.clone()
         };
 
-        if let Some(rest) = content.strip_prefix(&prefix) {
+        let mut rest_opt = None;
+        if let Some(ref custom) = custom_prefix {
+            if let Some(r) = content.strip_prefix(custom) {
+                rest_opt = Some(r);
+            } else if let Some(r) = content.strip_prefix(&default_prefix) {
+                rest_opt = Some(r);
+            } else if is_noprefix {
+                rest_opt = Some(content.as_str());
+            }
+        } else if let Some(r) = content.strip_prefix(&default_prefix) {
+            rest_opt = Some(r);
+        } else if is_noprefix {
+            rest_opt = Some(content.as_str());
+        }
+
+        if let Some(rest) = rest_opt {
+            if let Some(r) = content.strip_prefix(custom) {
+                rest_opt = Some(r);
+            } else if let Some(r) = content.strip_prefix(&default_prefix) {
+                rest_opt = Some(r);
+            }
+        } else if let Some(r) = content.strip_prefix(&default_prefix) {
+            rest_opt = Some(r);
+        }
+
+        if let Some(rest) = rest_opt {
             let mut parts = rest.split_whitespace();
             let command_name = match parts.next() {
                 Some(cmd) => cmd.to_lowercase(),
@@ -188,6 +213,9 @@ impl EventHandler for Handler {
                 "remove"      => crate::commands::remove::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "move"        => crate::commands::move_cmd::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "clear"       => crate::commands::clear::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "noprefix"    => crate::commands::noprefix::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "setprefix"   => crate::commands::setprefix::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "24/7"        => crate::commands::twenty_four_seven::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "lyrics"      => crate::commands::lyrics::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 
                 _ => return, // Unknown command

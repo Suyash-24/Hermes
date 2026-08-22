@@ -47,6 +47,9 @@ pub mod volume;
 // ── Existing utility commands ─────────────────────────────────────────────────
 pub mod avatar;
 pub mod info;
+pub mod noprefix;
+pub mod setprefix;
+pub mod twenty_four_seven;
 pub mod ping;
 
 

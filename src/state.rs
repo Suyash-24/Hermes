@@ -24,6 +24,9 @@ pub struct AppState {
     /// Resolved configuration (immutable after startup).
     pub config: Config,
 
+    /// Persistent database configuration.
+    pub db: Arc<RwLock<crate::db::Database>>,
+
     /// Per-command cooldown tracking.
     /// Key: `"{user_id}:{command_name}"` — Value: Unix timestamp when cooldown expires.
     pub cooldowns: DashMap<String, u64>,
@@ -52,6 +55,7 @@ impl AppState {
     pub fn new(config: Config) -> Arc<RwLock<Self>> {
         Arc::new(RwLock::new(Self {
             config,
+            db: Arc::new(RwLock::new(crate::db::Database::load())),
             cooldowns: DashMap::new(),
             sessions: DashMap::new(),
             music_queues: DashMap::new(),
