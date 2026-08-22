@@ -46,6 +46,26 @@ pub async fn handle(
         get_or_create_queue(&s.music_queues, guild_id)
     };
 
+    if action.starts_with("music_") {
+        let user_vc = ctx
+            .cache
+            .guild(guild_id)
+            .and_then(|g| g.voice_states.get(&component.user.id).and_then(|vs| vs.channel_id));
+        
+        let bot_vc = queue_arc.lock().await.voice_channel;
+        if let Some(b_vc) = bot_vc {
+            if Some(b_vc) != user_vc {
+                let card = build_error_card("You must be in the same voice channel as the bot to use controls.");
+                crate::components::v2::respond_to_interaction(&ctx.http, component.id.get(), &component.token, &card).await.map_err(BotError::Discord)?;
+                return Ok(());
+            }
+        } else {
+            let card = build_error_card("Bot is not in a voice channel.");
+            crate::components::v2::respond_to_interaction(&ctx.http, component.id.get(), &component.token, &card).await.map_err(BotError::Discord)?;
+            return Ok(());
+        }
+    }
+
     match action {
         // ── Pause / Resume ────────────────────────────────────────────────────
         "music_pause" => {

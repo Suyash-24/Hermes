@@ -39,7 +39,7 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
             Some(id) => id,
             None => {
                 let card = error_card("Must be used in a server.");
-                respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
+                crate::components::v2::edit_interaction_response(&ctx.http, &cmd.token, &card)
                     .await.map_err(BotError::Discord)?;
                 return Ok(());
             }
@@ -56,7 +56,7 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
             Some(track) => (track.author.clone(), track.title.clone()),
             None => {
                 let card = error_card("Nothing is playing and no query was provided.");
-                respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
+                crate::components::v2::edit_interaction_response(&ctx.http, &cmd.token, &card)
                     .await.map_err(BotError::Discord)?;
                 return Ok(());
             }
@@ -75,7 +75,7 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
         Ok(r) => r.json().await.unwrap_or(LyricsResponse { lyrics: None, error: Some("Parse error".into()) }),
         Err(e) => {
             let card = error_card(&format!("Failed to fetch lyrics: {e}"));
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
+            crate::components::v2::edit_interaction_response(&ctx.http, &cmd.token, &card)
                 .await.map_err(BotError::Discord)?;
             return Ok(());
         }
@@ -83,7 +83,7 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
 
     if let Some(err) = resp.error {
         let card = error_card(&format!("Lyrics not found: {err}"));
-        respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
+        crate::components::v2::edit_interaction_response(&ctx.http, &cmd.token, &card)
             .await.map_err(BotError::Discord)?;
         return Ok(());
     }
@@ -110,7 +110,7 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
          .text(hint("Source: lyrics.ovh"))
     });
 
-    respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
+    crate::components::v2::edit_interaction_response(&ctx.http, &cmd.token, &card)
         .await.map_err(BotError::Discord)?;
     Ok(())
 }

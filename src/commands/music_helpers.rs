@@ -52,22 +52,25 @@ pub async fn resolve_music_context(
             .clone()
     };
 
-    // Optionally check that bot is in a VC.
-    if require_bot_in_vc {
-        let bot_in_vc = {
-            let queue_arc = {
-                let state_lock = state.read().await;
-                state_lock.music_queues.get(&guild_id).map(|q| std::sync::Arc::clone(q.value()))
-            };
-            if let Some(q) = queue_arc {
-                q.lock().await.voice_channel.is_some()
-            } else {
-                false
-            }
+    // Check if bot is already in a VC, and if so, enforce the user is in the same one.
+    let bot_channel = {
+        let queue_arc = {
+            let state_lock = state.read().await;
+            state_lock.music_queues.get(&guild_id).map(|q| std::sync::Arc::clone(q.value()))
         };
-        if !bot_in_vc {
-            return Err(BotError::BotNotInVoiceChannel);
+        if let Some(q) = queue_arc {
+            q.lock().await.voice_channel
+        } else {
+            None
         }
+    };
+
+    if let Some(bot_vc) = bot_channel {
+        if bot_vc != voice_channel {
+            return Err(BotError::WrongVoiceChannel);
+        }
+    } else if require_bot_in_vc {
+        return Err(BotError::BotNotInVoiceChannel);
     }
 
     let queue = {
