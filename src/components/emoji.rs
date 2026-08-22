@@ -34,7 +34,7 @@ impl E {
     pub const INFO:        &'static str = "◎";
 
     // ── Actions / UI ─────────────────────────────────────────────────────────
-    pub const REFRESH:     &'static str = "↺";
+    pub const REFRESH:     &'static str = "🔄";
     pub const BACK:        &'static str = "←";
     pub const FORWARD:     &'static str = "→";
     pub const LINK:        &'static str = "⎋";
