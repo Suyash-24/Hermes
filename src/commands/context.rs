@@ -36,6 +36,37 @@ impl<'a> CommandContext<'a> {
         }
     }
 
+    pub fn member(&self, ctx: &Context) -> futures::future::BoxFuture<'_, serenity::Result<serenity::model::guild::Member>> {
+        use futures::future::FutureExt;
+        match self {
+            Self::Slash(cmd) => async move {
+                if let Some(guild_id) = cmd.guild_id {
+                    guild_id.member(&ctx.http, cmd.user.id).await
+                } else {
+                    Err(serenity::Error::Other("Not in a guild"))
+                }
+            }.boxed(),
+            Self::Prefix(msg) => async move {
+                if let Some(guild_id) = msg.guild_id {
+                    guild_id.member(&ctx.http, msg.author.id).await
+                } else {
+                    Err(serenity::Error::Other("Not in a guild"))
+                }
+            }.boxed(),
+        }
+    }
+
+    pub fn get_option(&self, name: &str) -> Option<&serenity::model::application::CommandDataOptionValue> {
+        if let Self::Slash(cmd) = self {
+            for option in &cmd.data.options {
+                if option.name == name {
+                    return Some(&option.value);
+                }
+            }
+        }
+        None
+    }
+
     pub fn user_name(&self) -> String {
         match self {
             Self::Slash(cmd) => cmd.user.name.clone(),

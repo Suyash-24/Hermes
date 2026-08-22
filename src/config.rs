@@ -25,6 +25,8 @@ pub struct Config {
 pub struct BotConfig {
     pub name: String,
     pub prefix: String,
+    #[serde(default)]
+    pub owners: Vec<u64>,
 }
 
 #[derive(Debug, Deserialize, Clone)]

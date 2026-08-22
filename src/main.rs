@@ -10,6 +10,7 @@
 mod commands;
 mod components;
 mod config;
+mod db;
 mod error;
 mod handler;
 mod interactions;

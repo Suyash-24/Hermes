@@ -97,7 +97,7 @@ pub fn track_end_event(
                     crate::music::status::update_voice_status(&data.http, vc_id, "Use play <song>").await;
                 } else {
                     crate::music::status::update_voice_status(&data.http, vc_id, "").await;
-                    let _ = client.destroy_player(guild_id).await;
+                    let _ = crate::music::lavalink::destroy_player(&client, guild_id).await;
                     // Note: In events, we don't have access to songbird manager directly
                     // However, we destroy the player. To actually leave the VC, we ideally need songbird,
                     // but destroying the Lavalink player effectively ends the music session for now.

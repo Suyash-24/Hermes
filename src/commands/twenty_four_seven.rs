@@ -33,7 +33,7 @@ pub async fn run(
 
     let is_owner = {
         let state_read = state.read().await;
-        state_read.config.bot.owners.contains(&cmd.user().id.get())
+        state_read.config.bot.owners.contains(&cmd.user_id().get())
     };
 
     if !has_perms && !is_owner {

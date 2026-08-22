@@ -149,9 +149,22 @@ impl EventHandler for Handler {
         let content = msg.content.trim().to_string();
 
         let state = get_state(&ctx).await;
-        let prefix = {
+        let (default_prefix, is_noprefix, custom_prefix) = {
             let s = state.read().await;
-            s.config.bot.prefix.clone()
+            let mut db = s.db.write().await;
+            
+            // Cleanup expired noprefix
+            let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
+            db.noprefix.retain(|_, &mut exp| exp == 0 || exp > now);
+            
+            let is_np = db.noprefix.contains_key(&msg.author.id.get());
+            let custom = if let Some(gid) = msg.guild_id {
+                db.guild_prefixes.get(&gid.get()).cloned()
+            } else {
+                None
+            };
+            
+            (s.config.bot.prefix.clone(), is_np, custom)
         };
 
         let mut rest_opt = None;
@@ -167,16 +180,6 @@ impl EventHandler for Handler {
             rest_opt = Some(r);
         } else if is_noprefix {
             rest_opt = Some(content.as_str());
-        }
-
-        if let Some(rest) = rest_opt {
-            if let Some(r) = content.strip_prefix(custom) {
-                rest_opt = Some(r);
-            } else if let Some(r) = content.strip_prefix(&default_prefix) {
-                rest_opt = Some(r);
-            }
-        } else if let Some(r) = content.strip_prefix(&default_prefix) {
-            rest_opt = Some(r);
         }
 
         if let Some(rest) = rest_opt {

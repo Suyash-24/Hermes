@@ -15,7 +15,7 @@ pub async fn run(
     // Only bot owner can use this command
     let is_owner = {
         let state_read = state.read().await;
-        state_read.config.bot.owners.contains(&cmd.user().id.get())
+        state_read.config.bot.owners.contains(&cmd.user_id().get())
     };
 
     if !is_owner {
