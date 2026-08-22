@@ -5,23 +5,37 @@ use crate::components::emoji::E;
 use crate::components::v2::respond_to_interaction;
 use crate::error::{BotError, BotResult};
 use crate::state::AppState;
-use serenity::{model::application::CommandInteraction, prelude::*};
+use serenity::prelude::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppState>>) -> BotResult {
+pub async fn run(
+    ctx: &Context,
+    cmd: &crate::commands::context::CommandContext<'_>,
+    state: Arc<RwLock<AppState>>,
+    args: &[&str],
+) -> BotResult<()> {
     let mc = match resolve_music_context(ctx, cmd, &state, true).await {
         Ok(c) => c,
         Err(e) => {
             let card = build_error_card(&e.to_string());
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.respond(ctx, &card).await?;
             return Ok(());
         }
     };
 
-    let from = cmd.data.options.first().and_then(|o| o.value.as_i64()).unwrap_or(0) as usize;
-    let to   = cmd.data.options.get(1).and_then(|o| o.value.as_i64()).unwrap_or(0) as usize;
+    let (from, to) = match cmd {
+        crate::commands::context::CommandContext::Slash(c) => {
+            let f = c.data.options.first().and_then(|o| o.value.as_i64()).unwrap_or(0) as usize;
+            let t = c.data.options.get(1).and_then(|o| o.value.as_i64()).unwrap_or(0) as usize;
+            (f, t)
+        }
+        crate::commands::context::CommandContext::Prefix(_) => {
+            let f = args.first().and_then(|s| s.parse::<usize>().ok()).unwrap_or(0);
+            let t = args.get(1).and_then(|s| s.parse::<usize>().ok()).unwrap_or(0);
+            (f, t)
+        }
+    };
 
     let success = {
         let mut q = mc.queue.lock().await;
@@ -33,12 +47,10 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
             "{} Moved track from position #{from} to #{to}",
             E::FORWARD
         ));
-        respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-            .await.map_err(BotError::Discord)?;
+        cmd.respond(ctx, &card).await?;
     } else {
         let card = build_error_card(&format!("Invalid positions: #{from} → #{to}."));
-        respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-            .await.map_err(BotError::Discord)?;
+        cmd.respond(ctx, &card).await?;
     }
 
     Ok(())

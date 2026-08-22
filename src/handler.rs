@@ -154,13 +154,48 @@ impl EventHandler for Handler {
             s.config.bot.prefix.clone()
         };
 
-        if let Some(query) = content.strip_prefix(&format!("{prefix}play ")) {
-            let query = query.trim().to_string();
-            if query.is_empty() {
-                let _ = msg.reply(&ctx.http, format!("❌ Please provide a search query or URL. Usage: `{prefix}play <song name>`")).await;
-                return;
+        if let Some(rest) = content.strip_prefix(&prefix) {
+            let mut parts = rest.split_whitespace();
+            let command_name = match parts.next() {
+                Some(cmd) => cmd.to_lowercase(),
+                None => return,
+            };
+            
+            let args: Vec<&str> = parts.collect();
+            let ctx_cmd = crate::commands::context::CommandContext::Prefix(&msg);
+            
+            // Dispatch
+            let result = match command_name.as_str() {
+                // Utility
+                "ping"        => crate::commands::ping::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "info"        => crate::commands::info::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "avatar"      => crate::commands::avatar::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                
+                // Music
+                "play"        => crate::commands::play::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "pause"       => crate::commands::pause::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "resume"      => crate::commands::resume::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "skip"        => crate::commands::skip::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "stop"        => crate::commands::stop::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "join"        => crate::commands::join::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "leave"       => crate::commands::leave::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "queue"       => crate::commands::queue_cmd::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "nowplaying"  => crate::commands::nowplaying::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "volume"      => crate::commands::volume::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "seek"        => crate::commands::seek::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "loop"        => crate::commands::loop_cmd::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "shuffle"     => crate::commands::shuffle::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "remove"      => crate::commands::remove::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "move"        => crate::commands::move_cmd::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "clear"       => crate::commands::clear::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "lyrics"      => crate::commands::lyrics::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                
+                _ => return, // Unknown command
+            };
+            
+            if let Err(e) = result {
+                tracing::error!("Prefix command failed: {e}");
             }
-            crate::commands::prefix::handle_play(&ctx, &msg, state, query).await;
         }
     }
 

@@ -24,6 +24,7 @@
 
 // ── Music commands ────────────────────────────────────────────────────────────
 pub mod clear;
+pub mod context;
 pub mod join;
 pub mod leave;
 pub mod loop_cmd;

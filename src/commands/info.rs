@@ -1,10 +1,10 @@
 /// /info — Show bot information and server stats.
 /// Also contains the info refresh button handler.
-use crate::components::emoji::{header, hint, stat, subheader, Colour, E};
-use crate::components::v2::{ButtonStyle, FadeResponse, IS_COMPONENTS_V2, respond_to_interaction};
+use crate::components::emoji::{header, hint, E};
+use crate::components::v2::{ButtonStyle, FadeResponse, IS_COMPONENTS_V2};
 use crate::error::{BotError, BotResult};
-use crate::state::AppState;
-use serenity::{model::application::{CommandInteraction, ComponentInteraction}, prelude::*};
+use crate::state::{AppState, ShardManagerKey};
+use serenity::{model::application::ComponentInteraction, prelude::*};
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
@@ -12,13 +12,13 @@ use tokio::sync::RwLock;
 
 pub async fn run(
     ctx: &Context,
-    cmd: &CommandInteraction,
+    cmd: &crate::commands::context::CommandContext<'_>,
     _state: Arc<RwLock<AppState>>,
-) -> BotResult {
-    let response = build_info_response(ctx, cmd.guild_id).await;
-    respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &response)
-        .await
-        .map_err(BotError::Discord)
+    _args: &[&str],
+) -> BotResult<()> {
+    let response = build_info_response(ctx, cmd.guild_id()).await;
+    cmd.respond(ctx, &response).await?;
+    Ok(())
 }
 
 // ── Refresh button ────────────────────────────────────────────────────────────
@@ -49,16 +49,29 @@ async fn build_info_response(
     let guild_count = ctx.cache.guild_count();
     let version     = env!("CARGO_PKG_VERSION");
 
-    let (guild_name, member_count, channel_count, boost_level) =
-        if let Some(gid) = guild_id {
-            if let Some(g) = ctx.cache.guild(gid) {
-                (g.name.clone(), g.member_count, g.channels.len(), u8::from(g.premium_tier))
+    let latency_display = {
+        let ws_latency = {
+            let data = ctx.data.read().await;
+            if let Some(shard_mgr) = data.get::<ShardManagerKey>() {
+                let runners = shard_mgr.runners.lock().await;
+                runners
+                    .get(&ctx.shard_id)
+                    .and_then(|r| r.latency)
+                    .map(|d| format!("{}ms", d.as_millis()))
             } else {
-                ("Unknown".into(), 0, 0, 0)
+                None
             }
-        } else {
-            ("Direct Message".into(), 0, 0, 0)
         };
+
+        match ws_latency {
+            Some(l) => l,
+            None => {
+                let start = std::time::Instant::now();
+                let _ = ctx.http.get_current_user().await;
+                format!("~{}ms", start.elapsed().as_millis())
+            }
+        }
+    };
 
     let bot_avatar = bot_user
         .avatar_url()
@@ -71,21 +84,9 @@ async fn build_info_response(
                  .text(hint(format!("v{} {} shard #{}", version, E::DOT, ctx.shard_id)))
                  .thumbnail(&bot_avatar)
             })
-            .separator(true)
-            .text(subheader("Bot"))
             .text(format!(
-                "{}\n{}\n{}",
-                stat(E::SERVERS,  "Servers",  format!("{guild_count}")),
-                stat(E::LATENCY,  "Shard",    format!("#{}", ctx.shard_id)),
-                stat(E::VERSION,  "Version",  format!("v{version}")),
-            ))
-            .separator(false)
-            .text(subheader(&guild_name))
-            .text(format!(
-                "{}\n{}\n{}",
-                stat(E::MEMBERS,  "Members",   format!("{member_count}")),
-                stat(E::CHANNELS, "Channels",  format!("{channel_count}")),
-                stat(E::BOOSTS,   "Boost tier",format!("{boost_level}")),
+                "```yaml\nVersion: v{}\nServers: {}\nShard:   #{}\nLatency: {}\n```",
+                version, guild_count, ctx.shard_id, latency_display
             ))
             .separator(true)
             .action_row(|r| {

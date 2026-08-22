@@ -5,28 +5,39 @@ use crate::components::v2::respond_to_interaction;
 use crate::error::{BotError, BotResult};
 use crate::music::lavalink as lava;
 use crate::state::AppState;
-use serenity::{model::application::CommandInteraction, prelude::*};
+use serenity::prelude::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
 
-pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppState>>) -> BotResult {
+pub async fn run(
+    ctx: &Context,
+    cmd: &crate::commands::context::CommandContext<'_>,
+    state: Arc<RwLock<AppState>>,
+    args: &[&str],
+) -> BotResult<()> {
     let mc = match resolve_music_context(ctx, cmd, &state, true).await {
         Ok(c) => c,
         Err(e) => {
             let card = build_error_card(&e.to_string());
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-                .await.map_err(BotError::Discord)?;
+            cmd.respond(ctx, &card).await?;
             return Ok(());
         }
     };
 
-    let count = cmd
-        .data
-        .options
-        .first()
-        .and_then(|o| o.value.as_i64())
-        .unwrap_or(1)
-        .max(1) as usize;
+    let count = match cmd {
+        crate::commands::context::CommandContext::Slash(c) => c
+            .data
+            .options
+            .first()
+            .and_then(|o| o.value.as_i64())
+            .unwrap_or(1)
+            .max(1) as usize,
+        crate::commands::context::CommandContext::Prefix(_) => args
+            .first()
+            .and_then(|s| s.parse::<usize>().ok())
+            .unwrap_or(1)
+            .max(1),
+    };
 
     let next_track = {
         let mut q = mc.queue.lock().await;
@@ -42,8 +53,7 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
         };
 
         let card = build_now_playing_card(&track, 0, loop_mode, shuffled, volume, queue_len, false);
-        respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-            .await.map_err(BotError::Discord)?;
+        cmd.respond(ctx, &card).await?;
     } else {
         lava::stop(&mc.lavalink, mc.guild_id).await?;
         {
@@ -52,8 +62,7 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
         }
 
         let card = build_success_card("⏭ Skipped — queue is now empty.");
-        respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
-            .await.map_err(BotError::Discord)?;
+        cmd.respond(ctx, &card).await?;
     }
 
     Ok(())

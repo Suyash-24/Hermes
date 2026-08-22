@@ -8,34 +8,33 @@ use crate::components::v2::edit_interaction_response;
 use crate::error::{BotError, BotResult};
 use crate::music::{lavalink as lava, queue::LoopMode};
 use crate::state::AppState;
-use serenity::{
-    model::application::CommandInteraction,
-    prelude::*,
-};
+use serenity::prelude::*;
 use std::sync::Arc;
 use tokio::sync::RwLock;
-use tracing::{error, info};
 
 pub async fn run(
     ctx: &Context,
-    cmd: &CommandInteraction,
+    cmd: &crate::commands::context::CommandContext<'_>,
     state: Arc<RwLock<AppState>>,
-) -> BotResult {
+    args: &[&str],
+) -> BotResult<()> {
     // Defer response so we have time to fetch track data.
     cmd.defer(ctx).await.map_err(BotError::Discord)?;
 
-    let query = cmd
-        .data
-        .options
-        .first()
-        .and_then(|o| o.value.as_str())
-        .unwrap_or("")
-        .to_string();
+    let query = match cmd {
+        crate::commands::context::CommandContext::Slash(c) => c
+            .data
+            .options
+            .first()
+            .and_then(|o| o.value.as_str())
+            .unwrap_or("")
+            .to_string(),
+        crate::commands::context::CommandContext::Prefix(_) => args.join(" "),
+    };
 
     if query.is_empty() {
         let card = build_error_card("Please provide a search query or URL.");
-        edit_interaction_response(&ctx.http, &cmd.token, &card).await
-            .map_err(BotError::Discord)?;
+        cmd.edit(ctx, &card).await?;
         return Ok(());
     }
 
@@ -75,30 +74,26 @@ pub async fn run(
                 if let Err(e) = mc.lavalink.create_player_context(mc.guild_id, lava_conn).await {
                     tracing::error!("create_player_context failed: {e}");
                     let card = build_error_card(&format!("Failed to create player context: {}", e));
-                    edit_interaction_response(&ctx.http, &cmd.token, &card)
-                        .await
-                        .map_err(BotError::Discord)?;
+                    cmd.edit(ctx, &card).await?;
                     return Ok(());
                 }
             }
             Err(why) => {
                 tracing::error!("Songbird join_gateway error: {why}");
                 let card = build_error_card(&format!("Could not connect to voice channel: {}", why));
-                edit_interaction_response(&ctx.http, &cmd.token, &card)
-                    .await
-                    .map_err(BotError::Discord)?;
+                cmd.edit(ctx, &card).await?;
                 return Ok(());
             }
         }
 
         let mut q = mc.queue.lock().await;
         q.voice_channel = Some(mc.voice_channel);
-        q.text_channel = cmd.channel_id.into();
+        q.text_channel = Some(cmd.channel_id());
     }
 
     // Resolve tracks.
-    let requested_by = cmd.user.id.get();
-    let requested_by_name = cmd.user.name.clone();
+    let requested_by = cmd.user_id().get();
+    let requested_by_name = cmd.user_name();
 
     let tracks = match lava::search_all(
         &mc.lavalink,
@@ -112,9 +107,7 @@ pub async fn run(
         Ok(t) => t,
         Err(e) => {
             let card = build_error_card(&e.to_string());
-            edit_interaction_response(&ctx.http, &cmd.token, &card)
-                .await
-                .map_err(BotError::Discord)?;
+            cmd.edit(ctx, &card).await?;
             return Ok(());
         }
     };
@@ -151,17 +144,13 @@ pub async fn run(
             };
 
             let card = build_now_playing_card(&first, 0, loop_mode, shuffled, volume, count.saturating_sub(1), false);
-            let msg = edit_interaction_response(&ctx.http, &cmd.token, &card)
-                .await
-                .map_err(BotError::Discord)?;
+            let msg = cmd.edit(ctx, &card).await?;
             
             let mut q = mc.queue.lock().await;
             q.now_playing_msg = Some((msg.channel_id, msg.id));
         } else {
             let card = build_playlist_queued_card(&tracks);
-            edit_interaction_response(&ctx.http, &cmd.token, &card)
-                .await
-                .map_err(BotError::Discord)?;
+            cmd.edit(ctx, &card).await?;
         }
     } else {
         // Single track.
@@ -181,9 +170,7 @@ pub async fn run(
             };
 
             let card = build_now_playing_card(&track, 0, loop_mode, shuffled, volume, 0, false);
-            let msg = edit_interaction_response(&ctx.http, &cmd.token, &card)
-                .await
-                .map_err(BotError::Discord)?;
+            let msg = cmd.edit(ctx, &card).await?;
             
             let mut q = mc.queue.lock().await;
             q.now_playing_msg = Some((msg.channel_id, msg.id));
@@ -196,9 +183,7 @@ pub async fn run(
             };
 
             let card = build_queued_card(&track, position);
-            edit_interaction_response(&ctx.http, &cmd.token, &card)
-                .await
-                .map_err(BotError::Discord)?;
+            cmd.edit(ctx, &card).await?;
         }
     }
 

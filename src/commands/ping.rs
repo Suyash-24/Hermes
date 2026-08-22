@@ -4,7 +4,7 @@ use crate::components::emoji::{header, stat, E};
 use crate::components::v2::{ButtonStyle, FadeResponse, IS_COMPONENTS_V2, respond_to_interaction};
 use crate::error::{BotError, BotResult};
 use crate::state::{AppState, ShardManagerKey};
-use serenity::{model::application::{CommandInteraction, ComponentInteraction}, prelude::*};
+use serenity::{model::application::ComponentInteraction, prelude::*};
 use std::sync::Arc;
 use std::time::{SystemTime, UNIX_EPOCH};
 use tokio::sync::RwLock;
@@ -13,9 +13,10 @@ use tokio::sync::RwLock;
 
 pub async fn run(
     ctx: &Context,
-    cmd: &CommandInteraction,
+    cmd: &crate::commands::context::CommandContext<'_>,
     _state: Arc<RwLock<AppState>>,
-) -> BotResult {
+    _args: &[&str],
+) -> BotResult<()> {
     // Try getting WebSocket heartbeat latency from shard manager.
     // Falls back to measuring a REST round-trip if the heartbeat hasn't fired yet.
     let latency_display = {
@@ -59,15 +60,25 @@ pub async fn run(
                  stat(E::SHARD,   "Shard",   format!("#{}", ctx.shard_id)),
                  stat(E::CREATED, "Checked", format!("<t:{now_ts}:R>")),
              ))
+    let card = FadeResponse::new()
+        .ephemeral()
+        .container(None, |c| {
+            c.text(header(E::BRAND, "Hermes"))
+             .separator(false)
+             .text(format!(
+                 "{}\n{}\n{}",
+                 stat(E::LATENCY, "Latency", &latency_display),
+                 stat(E::SHARD,   "Shard",   format!("#{}", ctx.shard_id)),
+                 stat(E::CREATED, "Checked", format!("<t:{now_ts}:R>")),
+             ))
              .separator(true)
              .action_row(|r| {
                  r.button_emoji("ping_refresh", "Refresh", ButtonStyle::Secondary, E::REFRESH)
              })
         });
 
-    respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &response)
-        .await
-        .map_err(BotError::Discord)
+    cmd.respond(ctx, &card).await?;
+    Ok(())
 }
 
 // ── Refresh button ────────────────────────────────────────────────────────────

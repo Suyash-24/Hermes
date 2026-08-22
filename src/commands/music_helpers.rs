@@ -7,10 +7,7 @@ use crate::music::{get_or_create_queue, GuildQueue, QueueMap};
 use crate::state::{AppState, LavalinkKey};
 use lavalink_rs::client::LavalinkClient;
 use serenity::{
-    model::{
-        application::CommandInteraction,
-        id::{ChannelId, GuildId},
-    },
+    model::id::{ChannelId, GuildId},
     prelude::*,
 };
 use std::sync::Arc;
@@ -27,11 +24,11 @@ pub struct MusicContext {
 /// If `require_bot_in_vc` is true, also checks that bot is already connected.
 pub async fn resolve_music_context(
     ctx: &Context,
-    cmd: &CommandInteraction,
+    cmd: &crate::commands::context::CommandContext<'_>,
     state: &Arc<RwLock<AppState>>,
     require_bot_in_vc: bool,
 ) -> BotResult<MusicContext> {
-    let guild_id = cmd.guild_id.ok_or(BotError::Permission("Must be used in a server".into()))?;
+    let guild_id = cmd.guild_id().ok_or(BotError::Permission("Must be used in a server".into()))?;
 
     // Find the user's voice channel via the cache.
     let voice_channel = ctx
@@ -39,7 +36,7 @@ pub async fn resolve_music_context(
         .guild(guild_id)
         .and_then(|g| {
             g.voice_states
-                .get(&cmd.user.id)
+                .get(&cmd.user_id())
                 .and_then(|vs| vs.channel_id)
         })
         .ok_or(BotError::NotInVoiceChannel)?;
