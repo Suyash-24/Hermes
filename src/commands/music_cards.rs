@@ -49,7 +49,7 @@ pub fn build_now_playing_card(
         .clone()
         .unwrap_or_else(|| "https://i.imgur.com/RtdAzJA.png".to_string());
 
-    FadeResponse::new().container(Some(Colour::MUSIC), |c| {
+    FadeResponse::new().container(None, |c| {
         c
             // Header section with thumbnail
             .section(|s| {
@@ -103,7 +103,7 @@ pub fn build_queued_card(track: &TrackInfo, position: usize) -> FadeResponse {
         .clone()
         .unwrap_or_else(|| "https://i.imgur.com/RtdAzJA.png".to_string());
 
-    FadeResponse::new().container(Some(Colour::FADE), |c| {
+    FadeResponse::new().container(None, |c| {
         c.section(|s| {
             s.text(format!("{} **Added to Queue**", E::NOTES))
              .text(format!("**{}**\n{} {} {} `{}`",
@@ -122,7 +122,7 @@ pub fn build_queued_card(track: &TrackInfo, position: usize) -> FadeResponse {
 /// Build a playlist queued confirmation card.
 pub fn build_playlist_queued_card(tracks: &[TrackInfo]) -> FadeResponse {
     let total_ms: u64 = tracks.iter().map(|t| t.duration_ms).sum();
-    FadeResponse::new().container(Some(Colour::FADE), |c| {
+    FadeResponse::new().container(None, |c| {
         c.text(format!(
             "{} **Playlist Added** — {} tracks {} `{}`",
             E::DISC,
@@ -135,14 +135,14 @@ pub fn build_playlist_queued_card(tracks: &[TrackInfo]) -> FadeResponse {
 
 /// Build an error card.
 pub fn build_error_card(message: &str) -> FadeResponse {
-    FadeResponse::new().ephemeral().container(Some(Colour::DANGER), |c| {
+    FadeResponse::new().ephemeral().container(None, |c| {
         c.text(format!("{} {}", E::ERROR, message))
     })
 }
 
 /// Build a success card.
 pub fn build_success_card(message: &str) -> FadeResponse {
-    FadeResponse::new().container(Some(Colour::SUCCESS), |c| {
+    FadeResponse::new().container(None, |c| {
         c.text(format!("{} {}", E::OK, message))
     })
 }
@@ -201,7 +201,7 @@ pub fn build_queue_card(
         format_duration_ms(total_ms),
     );
 
-    FadeResponse::new().container(Some(Colour::QUEUE_CLR), |c| {
+    FadeResponse::new().container(None, |c| {
         let c = c
             .text(header(E::QUEUE, format!("Queue  {} Page {}/{}", E::PIPE, page + 1, total_pages.max(1))))
             .separator(true)

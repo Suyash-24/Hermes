@@ -65,7 +65,7 @@ async fn build_info_response(
         .unwrap_or_else(|| bot_user.default_avatar_url());
 
     FadeResponse::new()
-        .container(Some(Colour::FADE), |c| {
+        .container(None, |c| {
             c.section(|s| {
                 s.text(header(E::BRAND, &bot_user.name))
                  .text(hint(format!("v{} {} shard #{}", version, E::DOT, ctx.shard_id)))

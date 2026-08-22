@@ -120,7 +120,7 @@ impl E {
     pub const LINE:        &'static str = "─";
 
     // ── Response accent colours (for Container accent_color) ──────────────────
-    // Use these with `FadeResponse::container(Some(Colour::XXX), ...)`
+    // Use these with `FadeResponse::container(None, ...)`
 }
 
 /// Accent colours for Container components.

@@ -476,4 +476,4 @@ pub async fn edit_channel_message(
     });
     http.edit_message(channel_id, message_id, &body, vec![]).await?;
     Ok(())
-}
+}

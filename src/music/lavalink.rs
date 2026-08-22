@@ -20,6 +20,7 @@ use serenity::model::id::{ChannelId, GuildId, UserId};
 /// For a text query, returns up to `limit` search results.
 pub async fn search_tracks(
     lavalink: &LavalinkClient,
+    guild_id: GuildId,
     query: &str,
     limit: usize,
 ) -> BotResult<Vec<TrackInfo>> {
@@ -31,7 +32,7 @@ pub async fn search_tracks(
     };
 
     let results = lavalink
-        .load_tracks(serenity::model::id::GuildId::new(0), &search_query)
+        .load_tracks(guild_id, &search_query)
         .await
         .map_err(|e| BotError::Lavalink(e.to_string()))?;
 
@@ -62,6 +63,7 @@ pub async fn search_tracks(
 /// Search and return just the top result.
 pub async fn search_one(
     lavalink: &LavalinkClient,
+    guild_id: GuildId,
     query: &str,
     requested_by: u64,
     requested_by_name: &str,
@@ -73,7 +75,7 @@ pub async fn search_one(
     };
 
     let results = lavalink
-        .load_tracks(GuildId::new(0), &search_query)
+        .load_tracks(guild_id, &search_query)
         .await
         .map_err(|e| BotError::Lavalink(e.to_string()))?;
 
@@ -99,6 +101,7 @@ pub async fn search_one(
 /// Search and return all results from a playlist URL or search query.
 pub async fn search_all(
     lavalink: &LavalinkClient,
+    guild_id: GuildId,
     query: &str,
     requested_by: u64,
     requested_by_name: &str,
@@ -110,7 +113,7 @@ pub async fn search_all(
     };
 
     let results = lavalink
-        .load_tracks(GuildId::new(0), &search_query)
+        .load_tracks(guild_id, &search_query)
         .await
         .map_err(|e| BotError::Lavalink(e.to_string()))?;
 

@@ -118,7 +118,7 @@ async fn send_queue_ended(
         v2::{FadeResponse, respond_to_channel},
     };
 
-    let response = FadeResponse::new().container(Some(Colour::SLATE), |c| {
+    let response = FadeResponse::new().container(None, |c| {
         c.text(format!("{} Queue ended — nothing left to play.", E::STOPPED))
     });
 

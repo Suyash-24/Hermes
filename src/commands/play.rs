@@ -4,7 +4,7 @@
 /// Adds to queue if something is already playing.
 use super::music_cards::{build_error_card, build_now_playing_card, build_playlist_queued_card, build_queued_card};
 use super::music_helpers::resolve_music_context;
-use crate::components::v2::respond_to_interaction;
+use crate::components::v2::edit_interaction_response;
 use crate::error::{BotError, BotResult};
 use crate::music::{lavalink as lava, queue::LoopMode};
 use crate::state::AppState;
@@ -34,7 +34,7 @@ pub async fn run(
 
     if query.is_empty() {
         let card = build_error_card("Please provide a search query or URL.");
-        respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card).await
+        edit_interaction_response(&ctx.http, &cmd.token, &card).await
             .map_err(BotError::Discord)?;
         return Ok(());
     }
@@ -43,7 +43,7 @@ pub async fn run(
         Ok(c) => c,
         Err(e) => {
             let card = build_error_card(&e.to_string());
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
+            edit_interaction_response(&ctx.http, &cmd.token, &card)
                 .await
                 .map_err(BotError::Discord)?;
             return Ok(());
@@ -77,6 +77,7 @@ pub async fn run(
 
     let tracks = match lava::search_all(
         &mc.lavalink,
+        mc.guild_id,
         &query,
         requested_by,
         &requested_by_name,
@@ -86,7 +87,7 @@ pub async fn run(
         Ok(t) => t,
         Err(e) => {
             let card = build_error_card(&e.to_string());
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
+            edit_interaction_response(&ctx.http, &cmd.token, &card)
                 .await
                 .map_err(BotError::Discord)?;
             return Ok(());
@@ -125,12 +126,12 @@ pub async fn run(
             };
 
             let card = build_now_playing_card(&first, 0, loop_mode, shuffled, volume, count.saturating_sub(1), false);
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
+            edit_interaction_response(&ctx.http, &cmd.token, &card)
                 .await
                 .map_err(BotError::Discord)?;
         } else {
             let card = build_playlist_queued_card(&tracks);
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
+            edit_interaction_response(&ctx.http, &cmd.token, &card)
                 .await
                 .map_err(BotError::Discord)?;
         }
@@ -152,7 +153,7 @@ pub async fn run(
             };
 
             let card = build_now_playing_card(&track, 0, loop_mode, shuffled, volume, 0, false);
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
+            edit_interaction_response(&ctx.http, &cmd.token, &card)
                 .await
                 .map_err(BotError::Discord)?;
         } else {
@@ -164,7 +165,7 @@ pub async fn run(
             };
 
             let card = build_queued_card(&track, position);
-            respond_to_interaction(&ctx.http, cmd.id.get(), &cmd.token, &card)
+            edit_interaction_response(&ctx.http, &cmd.token, &card)
                 .await
                 .map_err(BotError::Discord)?;
         }

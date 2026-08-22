@@ -25,8 +25,8 @@ pub async fn run(
 
     let response = FadeResponse::new()
         .ephemeral()
-        .container(Some(Colour::FADE), |c| {
-            c.text(header(E::BRAND, "Fade"))
+        .container(None, |c| {
+            c.text(header(E::BRAND, "Hermes"))
              .separator(false)
              .text(format!(
                  "{}\n{}\n{}",
@@ -61,8 +61,8 @@ pub async fn handle_refresh(
 
     let response = FadeResponse::new()
         .ephemeral()
-        .container(Some(Colour::FADE), |c| {
-            c.text(header(E::BRAND, "Fade"))
+        .container(None, |c| {
+            c.text(header(E::BRAND, "Hermes"))
              .separator(false)
              .text(format!(
                  "{}\n{}\n{}",

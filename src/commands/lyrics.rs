@@ -102,7 +102,7 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
         format!("{artist} — {title}")
     };
 
-    let card = FadeResponse::new().container(Some(Colour::LYRICS_CLR), |c| {
+    let card = FadeResponse::new().container(None, |c| {
         c.text(header(E::LYRICS, &search_label))
          .separator(true)
          .text(lyrics_display)
@@ -117,7 +117,7 @@ pub async fn run(ctx: &Context, cmd: &CommandInteraction, state: Arc<RwLock<AppS
 
 fn error_card(msg: &str) -> FadeResponse {
     use crate::components::emoji::Colour;
-    FadeResponse::new().ephemeral().container(Some(Colour::DANGER), |c| {
+    FadeResponse::new().ephemeral().container(None, |c| {
         c.text(format!("✗ {msg}"))
     })
 }

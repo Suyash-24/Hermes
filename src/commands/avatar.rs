@@ -17,19 +17,24 @@ pub async fn run(
     cmd: &CommandInteraction,
     _state: Arc<RwLock<AppState>>,
 ) -> BotResult {
-    // Resolve target — falls back to invoker
+    let mut guild_avatar = None;
     let target = cmd.data.options().iter().find_map(|opt| {
         if opt.name == "user" {
-            if let ResolvedOption { value: ResolvedValue::User(u, _), .. } = opt {
+            if let ResolvedOption { value: ResolvedValue::User(u, m), .. } = opt {
+                if let Some(member) = m {
+                    guild_avatar = member.avatar_url().map(|url| url.replace("size=1024", "size=4096"));
+                }
                 return Some((*u).clone());
             }
         }
         None
-    }).unwrap_or_else(|| cmd.user.clone());
+    }).unwrap_or_else(|| {
+        guild_avatar = cmd.member.as_ref().and_then(|m| m.avatar_url()).map(|u| u.replace("size=1024", "size=4096"));
+        cmd.user.clone()
+    });
 
     let display_name = target.global_name.as_deref().unwrap_or(&target.name).to_string();
 
-    // Avatar URLs
     let base_url = target.avatar_url().unwrap_or_else(|| target.default_avatar_url());
     let png_hd   = base_url.replace("size=1024", "size=4096").replace(".webp", ".png");
     let has_anim = target.avatar.as_ref().map(|a| a.to_string().starts_with("a_")).unwrap_or(false);
@@ -37,42 +42,29 @@ pub async fn run(
         base_url.replace("size=1024", "size=4096").replace(".webp", ".gif")
     });
 
-    // Guild-specific avatar
-    let guild_avatar = cmd.member.as_ref().and_then(|m| m.avatar_url())
-        .map(|u| u.replace("size=1024", "size=4096"));
+    let main_url = gif_url.unwrap_or(png_hd.clone());
 
     let response = FadeResponse::new()
-        .container(Some(Colour::FADE), |c| {
+        .container(None, |c| {
             let c = c.section(|s| {
-                let s = s.text(header(E::BRAND, &display_name))
-                         .text(stat(E::ID, "User ID", target.id));
-                if guild_avatar.is_some() {
-                    s.text(hint("Server avatar available below"))
-                } else {
-                    s
-                }
-                .thumbnail(&png_hd)
+                s.text(header(E::BRAND, &display_name))
+                 .text(stat(E::ID, "User ID", target.id))
             })
             .separator(true);
 
             let c = c.media_gallery(|g| {
-                let g = g.item(&png_hd, Some(&display_name));
-                if let Some(ref ga) = guild_avatar {
-                    g.item(ga, Some("Server avatar"))
-                } else { g }
+                g.item(&main_url, None)
             })
             .separator(true);
 
             c.action_row(|r| {
-                let r = r.link(&png_hd, "PNG 4K");
-                let r = if let Some(ref gif) = gif_url {
-                    r.link(gif, "GIF 4K")
+                let r = r.link(&main_url, "View Avatar");
+                if guild_avatar.is_some() {
+                    let custom_id = format!("avatar_SERVER_{}", target.id);
+                    r.button(&custom_id, "Server Avatar", ButtonStyle::Primary)
                 } else {
-                    r.button_disabled("No GIF", ButtonStyle::Secondary)
-                };
-                if let Some(ref ga) = guild_avatar {
-                    r.link(ga, "Server avatar")
-                } else { r }
+                    r
+                }
             })
         });
 

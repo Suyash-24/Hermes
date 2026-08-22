@@ -22,6 +22,7 @@
 pub mod info;
 pub mod music;
 pub mod ping;
+pub mod avatar;
 
 use crate::error::{BotError, BotResult};
 use crate::state::AppState;
@@ -45,6 +46,10 @@ pub async fn dispatch(
     match id {
         "ping_refresh" => ping::handle_refresh(ctx, component, state).await,
         "info_refresh" => info::handle_refresh(ctx, component, state).await,
+
+        id if id.starts_with("avatar_") => {
+            avatar::handle_toggle(ctx, component).await
+        }
 
         // Music controls
         "music_pause" | "music_skip" | "music_stop" | "music_shuffle" |
