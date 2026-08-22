@@ -221,3 +221,31 @@ async fn send_queue_ended(
     let _ = respond_to_channel(http, channel_id, &response).await;
     Ok(())
 }
+
+pub fn track_start_event(
+    client: LavalinkClient,
+    _session_id: String,
+    event: &TrackStart,
+) -> futures::future::BoxFuture<'static, ()> {
+    let event_guild_id = event.guild_id.0;
+    let track_title = event.track.info.title.clone();
+    
+    Box::pin(async move {
+        let guild_id = GuildId::new(event_guild_id);
+        let user_data = client.data::<crate::MusicEventData>();
+        let Ok(data) = user_data else { return; };
+        
+        let vc = {
+            let state_lock = data.state.read().await;
+            if let Some(queue_arc) = state_lock.music_queues.get(&guild_id) {
+                queue_arc.lock().await.voice_channel
+            } else {
+                None
+            }
+        };
+        
+        if let Some(vc_id) = vc {
+            crate::music::status::update_voice_status(&data.http, vc_id, &format!("?? {}", track_title)).await;
+        }
+    })
+}

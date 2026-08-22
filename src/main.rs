@@ -70,6 +70,7 @@ async fn main() -> Result<()> {
     };
 
     let lava_events = lavalink_rs::model::events::Events {
+        track_start: Some(crate::music::events::track_start_event),
         track_end: Some(track_end_event),
         track_exception: Some(track_error_event),
         track_stuck: Some(track_stuck_event),
