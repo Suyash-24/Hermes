@@ -35,11 +35,16 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         
         let mut q = mc.queue.lock().await;
         if let Some(vc_id) = q.voice_channel {
-            crate::music::status::update_voice_status(&ctx.http, vc_id, "").await;
+            crate::music::status::update_voice_status(&ctx.http, vc_id, "", None, None).await;
         }
         q.voice_channel = None;
         q.text_channel = None;
         q.now_playing_msg = None;
+    } else {
+        let mut q = mc.queue.lock().await;
+        if let Some(vc_id) = q.voice_channel {
+            crate::music::status::update_voice_status(&ctx.http, vc_id, "Waiting for music...", None, Some("⏳")).await;
+        }
     }
 
     {

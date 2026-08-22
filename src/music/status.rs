@@ -8,6 +8,8 @@ pub async fn update_voice_status(
     http: &Arc<serenity::http::Http>,
     channel_id: ChannelId,
     status: &str,
+    emoji_id: Option<u64>,
+    emoji_name: Option<&str>,
 ) {
     // Strip "Bot " prefix if it exists in token, since we add it below
     let token = http.token().replace("Bot ", "");
@@ -15,10 +17,17 @@ pub async fn update_voice_status(
     let client = Client::new();
     let url = format!("https://discord.com/api/v10/channels/{}/voice-status", channel_id.get());
 
+    let mut payload = json!({ "status": status });
+    if let Some(id) = emoji_id {
+        payload["emoji_id"] = json!(id.to_string());
+    } else if let Some(name) = emoji_name {
+        payload["emoji_name"] = json!(name);
+    }
+
     let res = client
         .put(&url)
         .header("Authorization", format!("Bot {}", token))
-        .json(&json!({ "status": status }))
+        .json(&payload)
         .send()
         .await;
 

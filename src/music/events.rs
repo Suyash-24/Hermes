@@ -135,7 +135,7 @@ pub fn track_end_event(
                             if let Some(q) = queue_arc {
                                 let mut q_lock = q.lock().await;
                                 if let Some(vc) = q_lock.voice_channel {
-                                    crate::music::status::update_voice_status(&data_clone.http, vc, "").await;
+                                    crate::music::status::update_voice_status(&data_clone.http, vc, "", None, None).await;
                                 }
                                 q_lock.voice_channel = None;
                                 q_lock.text_channel = None;
@@ -247,7 +247,7 @@ pub fn track_start_event(
         };
         
         if let Some(vc_id) = vc {
-            crate::music::status::update_voice_status(&data.http, vc_id, &format!("?? {}", track_title)).await;
+            crate::music::status::update_voice_status(&data.http, vc_id, &track_title, None, Some("??")).await;
         }
     })
 }
