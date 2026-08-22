@@ -20,10 +20,7 @@ pub async fn run(
     let mut guild_avatar = None;
     let target = cmd.data.options().iter().find_map(|opt| {
         if opt.name == "user" {
-            if let ResolvedOption { value: ResolvedValue::User(u, m), .. } = opt {
-                if let Some(member) = m {
-                    guild_avatar = member.avatar_url().map(|url| url.replace("size=1024", "size=4096"));
-                }
+            if let ResolvedOption { value: ResolvedValue::User(u, _), .. } = opt {
                 return Some((*u).clone());
             }
         }
@@ -32,6 +29,12 @@ pub async fn run(
         guild_avatar = cmd.member.as_ref().and_then(|m| m.avatar_url()).map(|u| u.replace("size=1024", "size=4096"));
         cmd.user.clone()
     });
+
+    if guild_avatar.is_none() && cmd.guild_id.is_some() {
+        if let Ok(m) = ctx.http.get_member(cmd.guild_id.unwrap(), target.id).await {
+            guild_avatar = m.avatar_url().map(|url| url.replace("size=1024", "size=4096"));
+        }
+    }
 
     let display_name = target.global_name.as_deref().unwrap_or(&target.name).to_string();
 
