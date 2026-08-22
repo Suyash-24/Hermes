@@ -19,10 +19,7 @@ pub fn track_end_event(
 ) -> futures::future::BoxFuture<'static, ()> {
     let reason = format!("{:?}", event.reason);
     Box::pin(async move {
-        let guild_id = match session_id.parse::<u64>() {
-            Ok(id) => GuildId::new(id),
-            Err(_) => return,
-        };
+        let guild_id = GuildId::new(event.guild_id.parse::<u64>().unwrap_or(0));
 
         info!(guild = %guild_id, reason = %reason, "Track ended");
 
@@ -95,7 +92,7 @@ pub fn track_error_event(
     let error_msg = event.exception.message.clone();
     Box::pin(async move {
         error!(
-            guild = %session_id,
+            guild = %event.guild_id,
             error = %error_msg,
             "Track error"
         );
@@ -109,8 +106,8 @@ pub fn track_stuck_event(
 ) -> futures::future::BoxFuture<'static, ()> {
     let threshold = event.threshold_ms;
     Box::pin(async move {
-        warn!(guild = %session_id, threshold = %threshold, "Track stuck");
-        if let Ok(guild_id) = session_id.parse::<u64>() {
+        warn!(guild = %event.guild_id, threshold = %threshold, "Track stuck");
+        if let Ok(guild_id) = event.guild_id.parse::<u64>() {
             let guild_id = GuildId::new(guild_id);
             let user_data = client.data::<MusicEventData>();
             if let Ok(data) = user_data {
