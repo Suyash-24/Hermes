@@ -28,18 +28,15 @@ pub async fn handle_play(
     };
 
     // User must be in a voice channel.
+    // We extract the channel ID inside a tight scope so the CacheRef is
+    // dropped immediately and never held across an `.await` point.
     let voice_channel = {
-        let guild = match ctx.cache.guild(guild_id) {
-            Some(g) => g,
-            None => {
-                let _ = msg.reply(&ctx.http, "❌ Could not find guild info.").await;
-                return;
-            }
-        };
-        guild
-            .voice_states
-            .get(&msg.author.id)
-            .and_then(|vs| vs.channel_id)
+        let maybe_channel = ctx.cache.guild(guild_id).and_then(|g| {
+            g.voice_states
+                .get(&msg.author.id)
+                .and_then(|vs| vs.channel_id)
+        });
+        maybe_channel
     };
 
     let voice_channel = match voice_channel {
