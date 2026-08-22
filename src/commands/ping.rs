@@ -49,17 +49,6 @@ pub async fn run(
         .unwrap_or_default()
         .as_secs();
 
-    let response = FadeResponse::new()
-        .ephemeral()
-        .container(None, |c| {
-            c.text(header(E::BRAND, "Hermes"))
-             .separator(false)
-             .text(format!(
-                 "{}\n{}\n{}",
-                 stat(E::LATENCY, "Latency", &latency_display),
-                 stat(E::SHARD,   "Shard",   format!("#{}", ctx.shard_id)),
-                 stat(E::CREATED, "Checked", format!("<t:{now_ts}:R>")),
-             ))
     let card = FadeResponse::new()
         .ephemeral()
         .container(None, |c| {
