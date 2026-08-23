@@ -16,7 +16,7 @@ pub async fn run(
     let bot_name = ctx.cache.current_user().name.clone();
     let bot_avatar = ctx.cache.current_user().face();
 
-    let (default_prefix, pfx) = {
+    let (_default_prefix, pfx) = {
         let state_guard = _state.read().await;
         let default_prefix = state_guard.config.bot.prefix.clone();
         

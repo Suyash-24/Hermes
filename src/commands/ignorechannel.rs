@@ -43,7 +43,7 @@ pub async fn run(
     // Parse slash command options or prefix arguments for channel mention
     match cmd {
         crate::commands::context::CommandContext::Slash(interaction) => {
-            if let Some(serenity::model::application::CommandDataOptionValue::Channel(id)) = interaction.data.options.iter().find(|opt| opt.name == "channel").and_then(|opt| opt.value.clone()) {
+            if let Some(serenity::model::application::CommandDataOptionValue::Channel(id)) = interaction.data.options.iter().find(|opt| opt.name == "channel").map(|opt| opt.value.clone()) {
                 target_channel = id;
             }
         },

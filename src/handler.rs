@@ -297,7 +297,7 @@ impl EventHandler for Handler {
                 
                 if !bypass {
                     if has_whitelists && !is_whitelisted {
-                        let _ = msg.reply(&ctx.http, "⚠️ Commands are restricted to bound channels only.").await.map(|mut m| {
+                        let _ = msg.reply(&ctx.http, "⚠️ Commands are restricted to bound channels only.").await.map(|m| {
                             let http = ctx.http.clone();
                             tokio::spawn(async move {
                                 tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
@@ -307,7 +307,7 @@ impl EventHandler for Handler {
                         return;
                     }
                     if is_blacklisted {
-                        let _ = msg.reply(&ctx.http, "⚠️ Commands are disabled in this channel.").await.map(|mut m| {
+                        let _ = msg.reply(&ctx.http, "⚠️ Commands are disabled in this channel.").await.map(|m| {
                             let http = ctx.http.clone();
                             tokio::spawn(async move {
                                 tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
