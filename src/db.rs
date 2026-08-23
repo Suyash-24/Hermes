@@ -16,6 +16,15 @@ pub struct Database {
     pub twenty_four_seven: HashSet<u64>,
     /// Guild ID -> Expiration Timestamp (unix seconds). 0 = lifetime.
     pub premium_guilds: HashMap<u64, u64>,
+    /// Guild ID -> Set of Blacklisted Channel IDs
+    #[serde(default)]
+    pub blacklisted_channels: HashMap<u64, HashSet<u64>>,
+    /// Guild ID -> Set of Whitelisted Channel IDs
+    #[serde(default)]
+    pub whitelisted_channels: HashMap<u64, HashSet<u64>>,
+    /// Guild ID -> Admin Bypass Enabled (default true)
+    #[serde(default)]
+    pub admin_bypass: HashMap<u64, bool>,
 }
 
 impl Database {

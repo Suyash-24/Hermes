@@ -56,7 +56,9 @@ pub mod serverbio;
 pub mod twenty_four_seven;
 pub mod ping;
 pub mod help;
-
+pub mod ignorechannel;
+pub mod bindchannel;
+pub mod adminbypass;
 
 use crate::error::{BotError, BotResult};
 use crate::state::AppState;
@@ -160,6 +162,23 @@ fn build_commands() -> Vec<CreateCommand> {
         CreateCommand::new("help")
             .description("Show the help center with all available commands"),
 
+        CreateCommand::new("ignorechannel")
+            .description("Toggle blacklisting for a channel (Admin only)")
+            .add_option(
+                CreateCommandOption::new(CommandOptionType::Channel, "channel", "The channel to blacklist/unblacklist")
+                    .required(false),
+            ),
+
+        CreateCommand::new("bindchannel")
+            .description("Toggle whitelisting for a channel (Admin only)")
+            .add_option(
+                CreateCommandOption::new(CommandOptionType::Channel, "channel", "The channel to whitelist/unwhitelist")
+                    .required(false),
+            ),
+
+        CreateCommand::new("adminbypass")
+            .description("Toggle whether admins bypass channel restrictions (Admin only)"),
+
         CreateCommand::new("join")
             .description("Join your voice channel"),
 
@@ -250,6 +269,51 @@ pub async fn dispatch(
     cmd: &CommandInteraction,
     state: Arc<RwLock<AppState>>,
 ) -> BotResult<()> {
+    // ---- CHANNEL RESTRICTION LOGIC ----
+    if let Some(guild_id) = cmd.guild_id {
+        let channel_id = cmd.channel_id;
+        let mut has_admin = false;
+        
+        if let Some(member) = &cmd.member {
+            has_admin = member.permissions.unwrap_or(serenity::model::Permissions::empty()).contains(serenity::model::Permissions::ADMINISTRATOR);
+        }
+        
+        let (is_whitelisted, has_whitelists, is_blacklisted, admin_bypass) = {
+            let state_guard = state.read().await;
+            let db = state_guard.db.read().await;
+            
+            let wl = db.whitelisted_channels.get(&guild_id.get());
+            let is_whitelisted = wl.map(|w| w.contains(&channel_id.get())).unwrap_or(false);
+            let has_whitelists = wl.map(|w| !w.is_empty()).unwrap_or(false);
+            
+            let bl = db.blacklisted_channels.get(&guild_id.get());
+            let is_blacklisted = bl.map(|b| b.contains(&channel_id.get())).unwrap_or(false);
+            
+            let admin_bypass = db.admin_bypass.get(&guild_id.get()).copied().unwrap_or(true);
+            
+            (is_whitelisted, has_whitelists, is_blacklisted, admin_bypass)
+        };
+        
+        let bypass = has_admin && admin_bypass;
+        
+        if !bypass {
+            if has_whitelists && !is_whitelisted {
+                let msg = serenity::builder::CreateInteractionResponseMessage::new()
+                    .content("⚠️ Commands are restricted to bound channels only.")
+                    .ephemeral(true);
+                let _ = cmd.create_response(&ctx.http, serenity::builder::CreateInteractionResponse::Message(msg)).await;
+                return Ok(()); // silently exit
+            }
+            if is_blacklisted {
+                let msg = serenity::builder::CreateInteractionResponseMessage::new()
+                    .content("⚠️ Commands are disabled in this channel.")
+                    .ephemeral(true);
+                let _ = cmd.create_response(&ctx.http, serenity::builder::CreateInteractionResponse::Message(msg)).await;
+                return Ok(()); // silently exit
+            }
+        }
+    }
+
     let ctx_cmd = crate::commands::context::CommandContext::Slash(cmd);
     let args: &[&str] = &[];
     match cmd.data.name.as_str() {
@@ -257,6 +321,9 @@ pub async fn dispatch(
         "ping"        => ping::run(ctx, &ctx_cmd, state, args).await,
         "info"        => info::run(ctx, &ctx_cmd, state, args).await,
         "help"        => help::run(ctx, &ctx_cmd, state, args).await,
+        "ignorechannel" => ignorechannel::run(ctx, &ctx_cmd, state, args).await,
+        "bindchannel" => bindchannel::run(ctx, &ctx_cmd, state, args).await,
+        "adminbypass" => adminbypass::run(ctx, &ctx_cmd, state, args).await,
         "avatar"      => avatar::run(ctx, &ctx_cmd, state, args).await,
         "premium"     => premium::run(ctx, &ctx_cmd, state, args).await,
         "serveravatar" => serveravatar::run(ctx, &ctx_cmd, state, args).await,

@@ -268,12 +268,66 @@ impl EventHandler for Handler {
             let args: Vec<&str> = parts.collect();
             let ctx_cmd = crate::commands::context::CommandContext::Prefix(&msg);
             
+            // ---- CHANNEL RESTRICTION LOGIC ----
+            if let Some(guild_id) = msg.guild_id {
+                let channel_id = msg.channel_id;
+                let mut has_admin = false;
+                
+                if let Some(member) = &msg.member {
+                    has_admin = member.permissions.unwrap_or(serenity::model::Permissions::empty()).contains(serenity::model::Permissions::ADMINISTRATOR);
+                }
+                
+                let (is_whitelisted, has_whitelists, is_blacklisted, admin_bypass) = {
+                    let state_guard = state.read().await;
+                    let db = state_guard.db.read().await;
+                    
+                    let wl = db.whitelisted_channels.get(&guild_id.get());
+                    let is_whitelisted = wl.map(|w| w.contains(&channel_id.get())).unwrap_or(false);
+                    let has_whitelists = wl.map(|w| !w.is_empty()).unwrap_or(false);
+                    
+                    let bl = db.blacklisted_channels.get(&guild_id.get());
+                    let is_blacklisted = bl.map(|b| b.contains(&channel_id.get())).unwrap_or(false);
+                    
+                    let admin_bypass = db.admin_bypass.get(&guild_id.get()).copied().unwrap_or(true);
+                    
+                    (is_whitelisted, has_whitelists, is_blacklisted, admin_bypass)
+                };
+                
+                let bypass = has_admin && admin_bypass;
+                
+                if !bypass {
+                    if has_whitelists && !is_whitelisted {
+                        let _ = msg.reply(&ctx.http, "⚠️ Commands are restricted to bound channels only.").await.map(|mut m| {
+                            let http = ctx.http.clone();
+                            tokio::spawn(async move {
+                                tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+                                let _ = m.delete(&http).await;
+                            });
+                        });
+                        return;
+                    }
+                    if is_blacklisted {
+                        let _ = msg.reply(&ctx.http, "⚠️ Commands are disabled in this channel.").await.map(|mut m| {
+                            let http = ctx.http.clone();
+                            tokio::spawn(async move {
+                                tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;
+                                let _ = m.delete(&http).await;
+                            });
+                        });
+                        return;
+                    }
+                }
+            }
+
             // Dispatch
             let result = match command_name.as_str() {
                 // Utility
                 "ping"        => crate::commands::ping::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "info"        => crate::commands::info::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
-                "help"        => crate::commands::help::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "help" | "h"  => crate::commands::help::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "ignorechannel" => crate::commands::ignorechannel::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "bindchannel" => crate::commands::bindchannel::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "adminbypass" => crate::commands::adminbypass::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "avatar"      => crate::commands::avatar::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 
                 // Music
@@ -288,7 +342,7 @@ impl EventHandler for Handler {
                 "nowplaying" | "np" => crate::commands::nowplaying::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "volume" | "v" => crate::commands::volume::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "seek"        => crate::commands::seek::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
-                "loop"        => crate::commands::loop_cmd::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "loop" | "l"  => crate::commands::loop_cmd::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "shuffle"     => crate::commands::shuffle::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "remove"      => crate::commands::remove::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "move"        => crate::commands::move_cmd::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,

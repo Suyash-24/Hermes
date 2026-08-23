@@ -19,18 +19,18 @@ pub struct E;
 impl E {
     // ── Brand / Identity ──────────────────────────────────────────────────────
     pub const BRAND:       &'static str = "<:hermes:1541085373764206674>"; // Fade's signature
-    pub const STAR:        &'static str = "✦";  // decorative accent (no variation selector)
-    pub const SPARK:       &'static str = "✧";  // lighter accent
-    pub const CROWN:       &'static str = "◈";  // owner / top rank
+    pub const STAR:        &'static str = "<:star:1541086754583347210>";  // decorative accent (no variation selector)
+    pub const SPARK:       &'static str = "<:sparkle:1541087185753612298>";  // lighter accent
+    pub const CROWN:       &'static str = "<:crown:1541089327780724796>";  // owner / top rank
 
     // ── Status ────────────────────────────────────────────────────────────────
-    pub const ONLINE:      &'static str = "🟢";
-    pub const IDLE:        &'static str = "🟡";
-    pub const DND:         &'static str = "🔴";
-    pub const OFFLINE:     &'static str = "⚫";
-    pub const OK:          &'static str = "✓";
-    pub const ERROR:       &'static str = "✗";
-    pub const WARN:        &'static str = "⚠";
+    pub const ONLINE:      &'static str = "<:online:1541090998351036416>";
+    pub const IDLE:        &'static str = "<:idle:1541090967904329749>";
+    pub const DND:         &'static str = "<:dnd:1541090930453516338>";
+    pub const OFFLINE:     &'static str = "<:offline:1541090899663261706>";
+    pub const OK:          &'static str = "<:tick:1541095138074431508>";
+    pub const ERROR:       &'static str = "<:cross:1541095302881345627>";
+    pub const WARN:        &'static str = "<:warning:1541095227400650754>";
     pub const INFO:        &'static str = "◎";
 
     // ── Actions / UI ─────────────────────────────────────────────────────────
@@ -55,7 +55,7 @@ impl E {
     pub const ID:          &'static str = "⋕";
 
     // ── Bot stats ─────────────────────────────────────────────────────────────
-    pub const LATENCY:     &'static str = "⚡";
+    pub const LATENCY:     &'static str = "<:ping:1541096502188056611>";
     pub const SHARD:       &'static str = "◈";
     pub const UPTIME:      &'static str = "⏲";
     pub const SERVERS:     &'static str = "⊞";
@@ -81,7 +81,7 @@ impl E {
     pub const UNLOCK:      &'static str = "⊖";
 
     // ── Music ─────────────────────────────────────────────────────────────────
-    pub const MUSIC:       &'static str = "🎵";
+    pub const MUSIC:       &'static str = "<:music:1541097435592401048>";
     pub const PLAYING:     &'static str = "▶";
     pub const PAUSED:      &'static str = "⏸";
     pub const STOPPED:     &'static str = "⏹";
@@ -99,9 +99,9 @@ impl E {
     pub const DISC:        &'static str = "💿";
     pub const MIC:         &'static str = "🎤";
     pub const WAVE:        &'static str = "〰";
-    pub const HEADPHONES:  &'static str = "🎧";
+    pub const HEADPHONES:  &'static str = "<:headphone:1541098762695483543>";
     pub const SPEAKER:     &'static str = "🔈";
-    pub const LYRICS:      &'static str = "📜";
+    pub const LYRICS:      &'static str = "<:lyrics:1541099234592428074>";
     pub const DURATION:    &'static str = "⏱";
     pub const JOINED_VC:   &'static str = "🔊";
     pub const LEFT_VC:     &'static str = "🔇";
