@@ -276,11 +276,17 @@ impl EventHandler for Handler {
                 if let Some(member) = &msg.member {
                     if let Some(perms) = member.permissions {
                         has_admin = perms.contains(serenity::model::Permissions::ADMINISTRATOR);
-                    } else if let Ok(perms) = guild_id.member_permissions(&ctx.http, msg.author.id).await {
+                    } else if let Ok(member_obj) = guild_id.member(&ctx.http, msg.author.id).await {
+                        #[allow(deprecated)]
+                        if let Ok(perms) = member_obj.permissions(&ctx) {
+                            has_admin = perms.contains(serenity::model::Permissions::ADMINISTRATOR);
+                        }
+                    }
+                } else if let Ok(member_obj) = guild_id.member(&ctx.http, msg.author.id).await {
+                    #[allow(deprecated)]
+                    if let Ok(perms) = member_obj.permissions(&ctx) {
                         has_admin = perms.contains(serenity::model::Permissions::ADMINISTRATOR);
                     }
-                } else if let Ok(perms) = guild_id.member_permissions(&ctx.http, msg.author.id).await {
-                    has_admin = perms.contains(serenity::model::Permissions::ADMINISTRATOR);
                 }
                 
                 let (is_whitelisted, has_whitelists, is_blacklisted, admin_bypass) = {

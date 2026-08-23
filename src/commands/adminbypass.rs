@@ -17,8 +17,11 @@ pub async fn run(
     let guild_id = cmd.guild_id().ok_or(BotError::Custom("This command can only be used in a server.".to_string()))?;
 
     let mut has_admin = false;
-    if let Ok(perms) = guild_id.member_permissions(&ctx.http, cmd.user_id()).await {
-        has_admin = perms.contains(Permissions::ADMINISTRATOR);
+    if let Ok(member) = guild_id.member(&ctx.http, cmd.user_id()).await {
+        #[allow(deprecated)]
+        if let Ok(perms) = member.permissions(ctx) {
+            has_admin = perms.contains(Permissions::ADMINISTRATOR);
+        }
     }
 
     if !has_admin {
