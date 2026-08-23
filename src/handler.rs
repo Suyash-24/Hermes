@@ -246,7 +246,9 @@ impl EventHandler for Handler {
                          })
                     });
                     
-                    let _ = respond_to_channel(&ctx.http, msg.channel_id, &card).await;
+                    if let Err(e) = respond_to_channel(&ctx.http, msg.channel_id, &card).await {
+                        tracing::error!("Failed to send mention greeting: {:?}", e);
+                    }
                 }
                 return;
             }

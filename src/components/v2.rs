@@ -456,7 +456,6 @@ pub async fn respond_to_channel(
 ) -> Result<serenity::model::channel::Message, serenity::Error> {
     let flags = IS_COMPONENTS_V2;
     let body = serde_json::json!({
-        "content": null,
         "flags": flags,
         "components": response.components_value(),
     });
