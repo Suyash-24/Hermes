@@ -135,8 +135,15 @@ pub fn build_playlist_queued_card(tracks: &[TrackInfo]) -> FadeResponse {
 
 /// Build an error card.
 pub fn build_error_card(message: &str) -> FadeResponse {
+    let has_emoji = message.chars().next().map(|c| !c.is_ascii()).unwrap_or(false);
+    let content = if has_emoji {
+        message.to_string()
+    } else {
+        format!("{} {}", E::ERROR, message)
+    };
+
     FadeResponse::new().ephemeral().container(None, |c| {
-        c.text(format!("{} {}", E::ERROR, message))
+        c.text(content)
     })
 }
 
