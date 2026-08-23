@@ -97,8 +97,7 @@ pub async fn run(
     } else {
         let target_url = image_url.unwrap();
         match download_and_process_image(&target_url).await {
-            Ok(base64_data) => {
-                let data_uri = format!("data:image/jpeg;base64,{}", base64_data);
+            Ok(data_uri) => {
                 serde_json::Value::String(data_uri)
             }
             Err(e) => {
