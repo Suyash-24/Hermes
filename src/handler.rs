@@ -175,25 +175,28 @@ impl EventHandler for Handler {
 
         let mut rest_opt = None;
         let mut was_mention = false;
+        let mut rest_str = content.as_str();
         
-        if let Some(r) = content.strip_prefix(&bot_mention) {
-            rest_opt = Some(r.trim_start());
+        if let Some(r) = rest_str.strip_prefix(&bot_mention) {
+            rest_str = r.trim_start();
             was_mention = true;
-        } else if let Some(r) = content.strip_prefix(&bot_mention_nick) {
-            rest_opt = Some(r.trim_start());
+        } else if let Some(r) = rest_str.strip_prefix(&bot_mention_nick) {
+            rest_str = r.trim_start();
             was_mention = true;
-        } else if let Some(ref custom) = custom_prefix {
-            if let Some(r) = content.strip_prefix(custom) {
-                rest_opt = Some(r);
-            } else if let Some(r) = content.strip_prefix(&default_prefix) {
-                rest_opt = Some(r);
-            } else if is_noprefix {
-                rest_opt = Some(content.as_str());
+        }
+
+        if let Some(ref custom) = custom_prefix {
+            if let Some(r) = rest_str.strip_prefix(custom) {
+                rest_opt = Some(r.trim_start());
+            } else if let Some(r) = rest_str.strip_prefix(&default_prefix) {
+                rest_opt = Some(r.trim_start());
+            } else if is_noprefix || was_mention {
+                rest_opt = Some(rest_str);
             }
-        } else if let Some(r) = content.strip_prefix(&default_prefix) {
-            rest_opt = Some(r);
-        } else if is_noprefix {
-            rest_opt = Some(content.as_str());
+        } else if let Some(r) = rest_str.strip_prefix(&default_prefix) {
+            rest_opt = Some(r.trim_start());
+        } else if is_noprefix || was_mention {
+            rest_opt = Some(rest_str);
         }
 
         if let Some(rest) = rest_opt {
