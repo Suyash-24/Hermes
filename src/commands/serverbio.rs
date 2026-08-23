@@ -22,12 +22,12 @@ pub async fn run(
         }
     };
 
-    // 1. Check if user has MANAGE_GUILD
+    // 1. Check if user has ADMINISTRATOR
     let has_perms = match cmd.member(ctx).await {
         Ok(member) => {
             #[allow(deprecated)]
             if let Ok(perms) = member.permissions(ctx) {
-                perms.contains(Permissions::MANAGE_GUILD)
+                perms.contains(Permissions::ADMINISTRATOR)
             } else {
                 false
             }
@@ -41,7 +41,7 @@ pub async fn run(
     };
 
     if !has_perms && !is_owner {
-        let card = build_error_card("You need the `Manage Server` permission to change the bot's server bio.");
+        let card = build_error_card("You need the `Administrator` permission to change the bot's server bio.");
         cmd.respond(ctx, &card).await?;
         return Ok(());
     }
@@ -84,24 +84,18 @@ pub async fn run(
         }
     };
 
-    let text = match bio_text {
-        Some(t) => t,
-        None => {
-            let card = build_error_card("Please provide the bio text.");
-            cmd.respond(ctx, &card).await?;
-            return Ok(());
-        }
-    };
+    // Acknowledge processing
+    let loading_card = build_success_card("⏳ Processing...");
+    cmd.respond(ctx, &loading_card).await?;
 
-    // 4. Send PATCH request to Discord API for Guild Member Profile
-    let bot_token = {
-        let _state_read = state.read().await;
-        ctx.http.token().to_string()
-    };
+    // 5. Send PATCH request to Discord API for Guild Member Profile
+    let bot_token = ctx.http.token().to_string();
 
     let api_url = format!("https://discord.com/api/v10/guilds/{}/members/@me", guild_id.get());
+    let bio_payload = bio_text.map(serde_json::Value::String).unwrap_or(serde_json::Value::Null);
     let payload = json!({
-        "bio": text // or "about" if Discord API uses that
+        "communication_disabled_until": null,
+        "bio": bio_payload
     });
 
     let client = Client::new();
@@ -114,7 +108,12 @@ pub async fn run(
     match resp {
         Ok(response) => {
             if response.status().is_success() {
-                let card = build_success_card("✅ Successfully updated the bot's server bio!");
+                let msg = if bio_payload.is_null() {
+                    "✅ Successfully reset the bot's server bio!"
+                } else {
+                    "✅ Successfully updated the bot's server bio!"
+                };
+                let card = build_success_card(msg);
                 cmd.respond(ctx, &card).await?;
             } else {
                 let err_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());

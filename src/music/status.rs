@@ -20,8 +20,13 @@ pub async fn update_voice_status(
     let mut payload = json!({ "status": status });
     if let Some(id) = emoji_id {
         payload["emoji_id"] = json!(id.to_string());
+        payload["emoji_name"] = serde_json::Value::Null;
     } else if let Some(name) = emoji_name {
         payload["emoji_name"] = json!(name);
+        payload["emoji_id"] = serde_json::Value::Null;
+    } else {
+        payload["emoji_id"] = serde_json::Value::Null;
+        payload["emoji_name"] = serde_json::Value::Null;
     }
 
     let res = client

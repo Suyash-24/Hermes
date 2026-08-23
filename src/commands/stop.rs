@@ -43,7 +43,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
     } else {
         let q = mc.queue.lock().await;
         if let Some(vc_id) = q.voice_channel {
-            crate::music::status::update_voice_status(&ctx.http, vc_id, "Use play <song>", None, None).await;
+            crate::music::status::update_voice_status(&ctx.http, vc_id, "Idle - Use /play", None, None).await;
         }
     }
 

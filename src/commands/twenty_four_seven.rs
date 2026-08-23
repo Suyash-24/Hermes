@@ -24,7 +24,7 @@ pub async fn run(
         Ok(member) => {
             #[allow(deprecated)]
             if let Ok(perms) = member.permissions(ctx) {
-                perms.contains(Permissions::MANAGE_GUILD)
+                perms.contains(Permissions::ADMINISTRATOR)
             } else {
                 false
             }
@@ -38,7 +38,7 @@ pub async fn run(
     };
 
     if !has_perms && !is_owner {
-        let card = build_error_card("You must have `Manage Server` permission to use this command.");
+        let card = build_error_card("You need the `Administrator` permission to use this command.");
         cmd.respond(ctx, &card).await?;
         return Ok(());
     }

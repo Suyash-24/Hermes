@@ -23,12 +23,12 @@ pub async fn run(
         }
     };
 
-    // 1. Check if user has MANAGE_GUILD
+    // 1. Check if user has ADMINISTRATOR
     let has_perms = match cmd.member(ctx).await {
         Ok(member) => {
             #[allow(deprecated)]
             if let Ok(perms) = member.permissions(ctx) {
-                perms.contains(Permissions::MANAGE_GUILD)
+                perms.contains(Permissions::ADMINISTRATOR)
             } else {
                 false
             }
@@ -42,7 +42,7 @@ pub async fn run(
     };
 
     if !has_perms && !is_owner {
-        let card = build_error_card("You need the `Manage Server` permission to change the bot's server avatar.");
+        let card = build_error_card("You need the `Administrator` permission to change the bot's server avatar.");
         cmd.respond(ctx, &card).await?;
         return Ok(());
     }
@@ -87,40 +87,34 @@ pub async fn run(
         }
     }
 
-    let url = match image_url {
-        Some(u) => u,
-        None => {
-            let card = build_error_card("Please provide an image attachment or URL.");
-            cmd.respond(ctx, &card).await?;
-            return Ok(());
-        }
-    };
-
     // Acknowledge processing
     let loading_card = build_success_card("⏳ Processing and downloading image...");
     cmd.respond(ctx, &loading_card).await?;
 
-    // 4. Download and process image
-    let base64_image = match download_and_process_image(&url).await {
-        Ok(b) => b,
-        Err(e) => {
-            let card = build_error_card(&format!("Failed to process image: {}", e));
-            cmd.respond(ctx, &card).await?;
-            return Ok(());
+    // 4. Download and process the image, or reset if none provided
+    let avatar_payload = if image_url.is_none() {
+        serde_json::Value::Null
+    } else {
+        let target_url = image_url.unwrap();
+        match download_and_process_image(&target_url).await {
+            Ok(base64_data) => {
+                let data_uri = format!("data:image/jpeg;base64,{}", base64_data);
+                serde_json::Value::String(data_uri)
+            }
+            Err(e) => {
+                let card = build_error_card(&format!("Failed to process image: {}", e));
+                cmd.respond(ctx, &card).await?;
+                return Ok(());
+            }
         }
     };
 
     // 5. Send PATCH request to Discord API for Guild Member Profile
-    let bot_token = {
-        let _state_read = state.read().await;
-        // In this architecture, token is either in config or from env var,
-        // let's grab it from context HTTP client token.
-        ctx.http.token().to_string()
-    };
+    let bot_token = ctx.http.token().to_string();
 
     let api_url = format!("https://discord.com/api/v10/guilds/{}/members/@me", guild_id.get());
     let payload = json!({
-        "avatar": base64_image
+        "avatar": avatar_payload
     });
 
     let client = Client::new();
@@ -133,7 +127,12 @@ pub async fn run(
     match resp {
         Ok(response) => {
             if response.status().is_success() {
-                let card = build_success_card("✅ Successfully updated the bot's server avatar!");
+                let msg = if avatar_payload.is_null() {
+                    "✅ Successfully reset the bot's server avatar!"
+                } else {
+                    "✅ Successfully updated the bot's server avatar!"
+                };
+                let card = build_success_card(msg);
                 cmd.respond(ctx, &card).await?;
             } else {
                 let err_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());

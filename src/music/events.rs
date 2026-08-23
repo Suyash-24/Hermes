@@ -95,7 +95,7 @@ pub fn track_end_event(
                 };
                 
                 if is_24_7 {
-                    crate::music::status::update_voice_status(&data.http, vc_id, "Use play <song>", None, None).await;
+                    crate::music::status::update_voice_status(&data.http, vc_id, "Idle - Use /play", None, None).await;
                 } else {
                     crate::music::status::update_voice_status(&data.http, vc_id, "", None, None).await;
                     

@@ -116,15 +116,15 @@ fn build_commands() -> Vec<CreateCommand> {
             
         CreateCommand::new("serveravatar")
             .description("Change the bot's server avatar (Premium & Admin)")
-            .add_option(CreateCommandOption::new(CommandOptionType::Attachment, "image", "The new avatar image").required(true)),
+            .add_option(CreateCommandOption::new(CommandOptionType::Attachment, "image", "The new avatar image (Leave empty to reset)").required(false)),
             
         CreateCommand::new("serverbanner")
             .description("Change the bot's server banner (Premium & Admin)")
-            .add_option(CreateCommandOption::new(CommandOptionType::Attachment, "image", "The new banner image").required(true)),
+            .add_option(CreateCommandOption::new(CommandOptionType::Attachment, "image", "The new banner image (Leave empty to reset)").required(false)),
             
         CreateCommand::new("serverbio")
             .description("Change the bot's server bio (Premium & Admin)")
-            .add_option(CreateCommandOption::new(CommandOptionType::String, "text", "The new bio text").required(true)),
+            .add_option(CreateCommandOption::new(CommandOptionType::String, "text", "The new bio text (Leave empty to reset)").required(false)),
 
         // ── Music ─────────────────────────────────────────────────────────────
         CreateCommand::new("play")

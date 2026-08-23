@@ -91,12 +91,13 @@ async fn build_info_response(
                  .thumbnail(&bot_avatar)
             })
             .text(format!(
-                "```yaml\nVersion: v{}\nServers: {}\nUsers:   {}\nShard:   #{}\nLatency: {}\nTech:    Rust, Serenity, Lavalink\n```",
+                "```yaml\nVersion:  v{}\nServers:  {}\nUsers:    {}\nShard:    #{}\nLatency:  {}\n\nRust:     v1.80\nSerenity: v0.12\nLavalink: v4.0\n```",
                 version, guild_count, user_count, ctx.shard_id, latency_display
             ))
             .separator(true)
             .action_row(|r| {
                 r.button_emoji("info_refresh", "Refresh", ButtonStyle::Secondary, E::REFRESH)
+                 .link("https://discord.com/invite/SmdUGNXjYv", "Support Server")
             })
         })
 }
