@@ -167,8 +167,20 @@ impl EventHandler for Handler {
             (s.config.bot.prefix.clone(), is_np, custom)
         };
 
+        let bot_id = ctx.cache.current_user().id;
+        let bot_mention = format!("<@{}>", bot_id);
+        let bot_mention_nick = format!("<@!{}>", bot_id);
+
         let mut rest_opt = None;
-        if let Some(ref custom) = custom_prefix {
+        let mut was_mention = false;
+        
+        if let Some(r) = content.strip_prefix(&bot_mention) {
+            rest_opt = Some(r.trim_start());
+            was_mention = true;
+        } else if let Some(r) = content.strip_prefix(&bot_mention_nick) {
+            rest_opt = Some(r.trim_start());
+            was_mention = true;
+        } else if let Some(ref custom) = custom_prefix {
             if let Some(r) = content.strip_prefix(custom) {
                 rest_opt = Some(r);
             } else if let Some(r) = content.strip_prefix(&default_prefix) {
@@ -183,6 +195,26 @@ impl EventHandler for Handler {
         }
 
         if let Some(rest) = rest_opt {
+            if rest.is_empty() {
+                if was_mention {
+                    use crate::components::v2::{FadeResponse, respond_to_channel, ButtonStyle};
+                    use crate::components::emoji::E;
+                    
+                    let pfx = custom_prefix.unwrap_or(default_prefix);
+                    let text = format!("Hi there! My prefix in this server is `{}`\nYou can also use slash commands (/) or just mention me!", pfx);
+                    
+                    let card = FadeResponse::new().container(None, |c| {
+                        c.section(|s| s.text(text))
+                         .action_row(|r| {
+                             r.link("https://discord.com/invite/SmdUGNXjYv", "Support Server")
+                         })
+                    });
+                    
+                    let _ = respond_to_channel(&ctx.http, msg.channel_id, &card).await;
+                }
+                return;
+            }
+
             let mut parts = rest.split_whitespace();
             let command_name = match parts.next() {
                 Some(cmd) => cmd.to_lowercase(),
