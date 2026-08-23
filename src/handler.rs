@@ -180,6 +180,8 @@ impl EventHandler for Handler {
             || content.contains(&bot_id.to_string())
             || content.contains("1398578769438048368");
             
+        tracing::info!("DEBUG_MSG: content='{}', mentions_bot={}, mentions={:?}, bot_id={}", content, mentions_bot, msg.mentions.iter().map(|u| u.id.get()).collect::<Vec<_>>(), bot_id.get());
+
         // Fallback for literal text mentions (if Discord didn't format them as a real mention)
         if !mentions_bot {
             if let Some(r) = rest_str.strip_prefix("@leos") {
