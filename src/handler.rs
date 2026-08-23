@@ -171,18 +171,34 @@ impl EventHandler for Handler {
         let bot_mention = format!("<@{}>", bot_id);
         let bot_mention_nick = format!("<@!{}>", bot_id);
 
-        tracing::debug!("Received message content: '{}', bot_mention: '{}', bot_mention_nick: '{}'", content, bot_mention, bot_mention_nick);
-
         let mut rest_opt = None;
         let mut was_mention = false;
         let mut rest_str = content.as_str();
         
-        if let Some(r) = rest_str.strip_prefix(&bot_mention) {
-            rest_str = r.trim_start();
-            was_mention = true;
-        } else if let Some(r) = rest_str.strip_prefix(&bot_mention_nick) {
-            rest_str = r.trim_start();
-            was_mention = true;
+        let mentions_bot = msg.mentions_user_id(bot_id) || msg.mentions_me(&ctx.http).await.unwrap_or(false);
+        
+        if mentions_bot {
+            let re = regex::Regex::new(r"<@!?&?[0-9]+>").unwrap();
+            
+            // If the message is ONLY mentions (e.g. they just pinged the bot's role)
+            if re.replace_all(content.as_str(), "").trim().is_empty() {
+                rest_str = "";
+                was_mention = true;
+            } else {
+                // If it has text, strip the first mention if it's at the beginning
+                if let Some(r) = rest_str.strip_prefix(&bot_mention) {
+                    rest_str = r.trim_start();
+                    was_mention = true;
+                } else if let Some(r) = rest_str.strip_prefix(&bot_mention_nick) {
+                    rest_str = r.trim_start();
+                    was_mention = true;
+                } else if let Some(m) = re.find(rest_str) {
+                    if m.start() == 0 {
+                        rest_str = rest_str[m.end()..].trim_start();
+                        was_mention = true;
+                    }
+                }
+            }
         }
 
         if let Some(ref custom) = custom_prefix {
