@@ -16,23 +16,10 @@ pub async fn run(
 
     let guild_id = cmd.guild_id().ok_or(BotError::Custom("This command can only be used in a server.".to_string()))?;
 
-    // Check admin
-    let has_admin = match cmd {
-        crate::commands::context::CommandContext::Prefix(msg) => {
-            if let Some(member) = &msg.member {
-                member.permissions.unwrap_or(Permissions::empty()).contains(Permissions::ADMINISTRATOR)
-            } else {
-                false
-            }
-        },
-        crate::commands::context::CommandContext::Slash(interaction) => {
-            if let Some(member) = &interaction.member {
-                member.permissions.unwrap_or(Permissions::empty()).contains(Permissions::ADMINISTRATOR)
-            } else {
-                false
-            }
-        }
-    };
+    let mut has_admin = false;
+    if let Ok(perms) = guild_id.member_permissions(&ctx.http, cmd.user_id()).await {
+        has_admin = perms.contains(Permissions::ADMINISTRATOR);
+    }
 
     if !has_admin {
         return Err(BotError::Custom("You need Administrator permissions to use this command.".to_string()));
