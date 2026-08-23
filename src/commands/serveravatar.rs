@@ -1,5 +1,5 @@
 use crate::commands::music_cards::{build_error_card, build_success_card};
-use crate::error::{BotError, BotResult};
+use crate::error::BotResult;
 use crate::state::AppState;
 use serenity::{model::prelude::*, prelude::*};
 use std::sync::Arc;
@@ -24,9 +24,16 @@ pub async fn run(
     };
 
     // 1. Check if user has MANAGE_GUILD
-    let has_perms = match cmd.member() {
-        Some(member) => member.permissions.map_or(false, |p| p.contains(Permissions::MANAGE_GUILD)),
-        None => false,
+    let has_perms = match cmd.member(ctx).await {
+        Ok(member) => {
+            #[allow(deprecated)]
+            if let Ok(perms) = member.permissions(ctx) {
+                perms.contains(Permissions::MANAGE_GUILD)
+            } else {
+                false
+            }
+        }
+        Err(_) => false,
     };
 
     let is_owner = {

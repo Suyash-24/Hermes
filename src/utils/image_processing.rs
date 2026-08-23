@@ -1,7 +1,6 @@
 use crate::error::{BotError, BotResult};
 use base64::{engine::general_purpose, Engine as _};
-use bytes::Bytes;
-use image::{imageops::FilterType, DynamicImage, ImageFormat};
+use image::{imageops::FilterType, ImageFormat};
 use reqwest::Client;
 use std::io::Cursor;
 use tracing::info;

@@ -1,5 +1,5 @@
 use crate::commands::music_cards::{build_error_card, build_success_card};
-use crate::error::{BotError, BotResult};
+use crate::error::BotResult;
 use crate::state::AppState;
 use serenity::prelude::*;
 use std::sync::Arc;

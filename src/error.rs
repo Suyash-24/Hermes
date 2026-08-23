@@ -19,6 +19,9 @@ pub enum BotError {
     #[error("Missing permission: {0}")]
     Permission(String),
 
+    #[error("{0}")]
+    Custom(String),
+
     // ── Interaction layer ─────────────────────────────────────────────────────
     #[error("Interaction timed out (component_id={component_id})")]
     InteractionTimeout { component_id: String },

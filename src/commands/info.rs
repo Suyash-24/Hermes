@@ -72,6 +72,13 @@ async fn build_info_response(
         }
     };
 
+    let mut user_count = 0;
+    for guild_ref in ctx.cache.guilds() {
+        if let Some(guild) = ctx.cache.guild(guild_ref) {
+            user_count += guild.member_count;
+        }
+    }
+
     let bot_avatar = bot_user
         .avatar_url()
         .unwrap_or_else(|| bot_user.default_avatar_url());
@@ -84,8 +91,8 @@ async fn build_info_response(
                  .thumbnail(&bot_avatar)
             })
             .text(format!(
-                "```yaml\nVersion: v{}\nServers: {}\nShard:   #{}\nLatency: {}\n```",
-                version, guild_count, ctx.shard_id, latency_display
+                "```yaml\nVersion: v{}\nServers: {}\nUsers:   {}\nShard:   #{}\nLatency: {}\nTech:    Rust, Serenity, Lavalink\n```",
+                version, guild_count, user_count, ctx.shard_id, latency_display
             ))
             .separator(true)
             .action_row(|r| {
