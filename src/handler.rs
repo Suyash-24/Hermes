@@ -240,7 +240,7 @@ impl EventHandler for Handler {
                     let text = format!("Hi there! My prefix in this server is `{}`\nYou can also use slash commands (/) or just mention me!", pfx);
                     
                     let card = FadeResponse::new().container(None, |c| {
-                        c.section(|s| s.text(text))
+                        c.text(text)
                          .action_row(|r| {
                              r.link("https://discord.com/invite/SmdUGNXjYv", "Support Server")
                          })
