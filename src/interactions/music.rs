@@ -128,6 +128,12 @@ pub async fn handle(
             }
             let card = build_success_card("⏹ Stopped playback and cleared the queue.");
             edit_with_card(ctx, component, &card).await?;
+
+            let _ = crate::music::status::update_voice_status(
+                &ctx.http,
+                guild_id,
+                Some("Idle - Use /play"),
+            ).await;
         }
 
         // ── Shuffle ───────────────────────────────────────────────────────────

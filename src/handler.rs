@@ -171,6 +171,8 @@ impl EventHandler for Handler {
         let bot_mention = format!("<@{}>", bot_id);
         let bot_mention_nick = format!("<@!{}>", bot_id);
 
+        tracing::debug!("Received message content: '{}', bot_mention: '{}', bot_mention_nick: '{}'", content, bot_mention, bot_mention_nick);
+
         let mut rest_opt = None;
         let mut was_mention = false;
         
@@ -232,16 +234,16 @@ impl EventHandler for Handler {
                 "avatar"      => crate::commands::avatar::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 
                 // Music
-                "play"        => crate::commands::play::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "play" | "p"  => crate::commands::play::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "pause"       => crate::commands::pause::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "resume"      => crate::commands::resume::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
-                "skip"        => crate::commands::skip::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "skip" | "s"  => crate::commands::skip::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "stop"        => crate::commands::stop::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "join"        => crate::commands::join::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "leave"       => crate::commands::leave::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
-                "queue"       => crate::commands::queue_cmd::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
-                "nowplaying"  => crate::commands::nowplaying::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
-                "volume"      => crate::commands::volume::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "queue" | "q" => crate::commands::queue_cmd::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "nowplaying" | "np" => crate::commands::nowplaying::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "volume" | "v" => crate::commands::volume::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "seek"        => crate::commands::seek::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "loop"        => crate::commands::loop_cmd::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "shuffle"     => crate::commands::shuffle::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
