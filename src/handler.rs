@@ -199,8 +199,7 @@ impl EventHandler for Handler {
         if let Some(rest) = rest_opt {
             if rest.is_empty() {
                 if was_mention {
-                    use crate::components::v2::{FadeResponse, respond_to_channel, ButtonStyle};
-                    use crate::components::emoji::E;
+                    use crate::components::v2::{FadeResponse, respond_to_channel};
                     
                     let pfx = custom_prefix.unwrap_or(default_prefix);
                     let text = format!("Hi there! My prefix in this server is `{}`\nYou can also use slash commands (/) or just mention me!", pfx);

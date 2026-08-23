@@ -125,15 +125,13 @@ pub async fn handle(
                 let mut q = queue_arc.lock().await;
                 q.current = None;
                 q.clear();
+                
+                if let Some(vc_id) = q.voice_channel {
+                    let _ = crate::music::status::update_voice_status(&ctx.http, vc_id, "Idle - Use /play", None, None).await;
+                }
             }
             let card = build_success_card("⏹ Stopped playback and cleared the queue.");
             edit_with_card(ctx, component, &card).await?;
-
-            let _ = crate::music::status::update_voice_status(
-                &ctx.http,
-                guild_id,
-                Some("Idle - Use /play"),
-            ).await;
         }
 
         // ── Shuffle ───────────────────────────────────────────────────────────
