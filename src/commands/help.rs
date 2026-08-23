@@ -21,8 +21,8 @@ pub async fn run(
         let default_prefix = state_guard.config.bot.prefix.clone();
         
         let custom_prefix = if let Some(guild_id) = cmd.guild_id() {
-            let mut db = state_guard.db.write().await;
-            db.get_prefix(guild_id.get()).unwrap_or(None)
+            let db = state_guard.db.read().await;
+            db.guild_prefixes.get(&guild_id.get()).cloned()
         } else {
             None
         };
