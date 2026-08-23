@@ -16,16 +16,17 @@ pub async fn run(
     let bot_name = ctx.cache.current_user().name.clone();
     let bot_avatar = ctx.cache.current_user().face();
 
-    let default_prefix = {
-        let data = ctx.data.read().await;
-        data.get::<crate::config::Config>().unwrap().bot.prefix.clone()
-    };
-    
-    let pfx = if let Some(guild_id) = cmd.guild_id() {
+    let (default_prefix, pfx) = {
         let state_guard = _state.read().await;
-        state_guard.db.get_prefix(guild_id.get()).await.unwrap_or(None).unwrap_or(default_prefix)
-    } else {
-        default_prefix
+        let default_prefix = state_guard.config.bot.prefix.clone();
+        
+        let custom_prefix = if let Some(guild_id) = cmd.guild_id() {
+            let mut db = state_guard.db.write().await;
+            db.get_prefix(guild_id.get()).unwrap_or(None)
+        } else {
+            None
+        };
+        (default_prefix.clone(), custom_prefix.unwrap_or(default_prefix))
     };
 
     use crate::components::emoji::E;
