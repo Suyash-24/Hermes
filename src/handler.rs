@@ -238,7 +238,7 @@ impl EventHandler for Handler {
                     let bot_name = ctx.cache.current_user().name.clone();
                     let bot_avatar = ctx.cache.current_user().face();
                     
-                    let section_text = format!("**Hey there!** ✨\nHello! I'm **{}**, an all-in-one community bot.\n\n✨ **Prefix:** `{}`\n\n✨ You can also run commands by tagging me! e.g. `<@{}> play lo-fi`", bot_name, pfx, bot_id);
+                    let section_text = format!("**Hey there!** ✨\nHello! I'm **{}**, an all-in-one community bot.\n\n✨ **Prefix:** `{}`\n\n✨ You can also run commands by tagging me! e.g. `@{bot_name} play lo-fi`", bot_name, pfx);
                     let help_text = "Need help? Use the `help` command to see everything I can do!".to_string();
                     
                     let card = FadeResponse::new().container(None, |c| {
@@ -273,6 +273,7 @@ impl EventHandler for Handler {
                 // Utility
                 "ping"        => crate::commands::ping::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "info"        => crate::commands::info::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "help"        => crate::commands::help::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "avatar"      => crate::commands::avatar::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 
                 // Music

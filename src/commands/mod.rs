@@ -55,6 +55,7 @@ pub mod serverbanner;
 pub mod serverbio;
 pub mod twenty_four_seven;
 pub mod ping;
+pub mod help;
 
 
 use crate::error::{BotError, BotResult};
@@ -156,6 +157,9 @@ fn build_commands() -> Vec<CreateCommand> {
         CreateCommand::new("stop")
             .description("Stop playback and clear the queue"),
 
+        CreateCommand::new("help")
+            .description("Show the help center with all available commands"),
+
         CreateCommand::new("join")
             .description("Join your voice channel"),
 
@@ -252,6 +256,7 @@ pub async fn dispatch(
         // Utility
         "ping"        => ping::run(ctx, &ctx_cmd, state, args).await,
         "info"        => info::run(ctx, &ctx_cmd, state, args).await,
+        "help"        => help::run(ctx, &ctx_cmd, state, args).await,
         "avatar"      => avatar::run(ctx, &ctx_cmd, state, args).await,
         "premium"     => premium::run(ctx, &ctx_cmd, state, args).await,
         "serveravatar" => serveravatar::run(ctx, &ctx_cmd, state, args).await,
