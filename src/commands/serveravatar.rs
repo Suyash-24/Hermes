@@ -36,12 +36,7 @@ pub async fn run(
         Err(_) => false,
     };
 
-    let is_owner = {
-        let state_read = state.read().await;
-        state_read.config.bot.owners.contains(&cmd.user_id().get())
-    };
-
-    if !has_perms && !is_owner {
+    if !has_perms {
         let card = build_error_card("You need the `Administrator` permission to change the bot's server avatar.");
         cmd.respond(ctx, &card).await?;
         return Ok(());
