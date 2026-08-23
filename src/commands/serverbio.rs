@@ -95,7 +95,7 @@ pub async fn run(
 
     // 4. Send PATCH request to Discord API for Guild Member Profile
     let bot_token = {
-        let state_read = state.read().await;
+        let _state_read = state.read().await;
         ctx.http.token().to_string()
     };
 

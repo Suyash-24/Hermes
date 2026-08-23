@@ -112,7 +112,7 @@ pub async fn run(
 
     // 5. Send PATCH request to Discord API for Guild Member Profile
     let bot_token = {
-        let state_read = state.read().await;
+        let _state_read = state.read().await;
         // In this architecture, token is either in config or from env var,
         // let's grab it from context HTTP client token.
         ctx.http.token().to_string()

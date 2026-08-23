@@ -49,7 +49,7 @@ pub async fn run(
         let db = state_read.db.read().await;
         let now = std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).unwrap().as_secs();
         
-        let has_premium = match db.premium_guilds.get(&mc.guild_id.get()) {
+        let has_premium = match db.premium_guilds.get(&cmd.guild_id().unwrap().get()) {
             Some(&expiration) => expiration == 0 || expiration > now,
             None => false,
         };
