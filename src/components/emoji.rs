@@ -18,7 +18,7 @@ pub struct E;
 
 impl E {
     // ── Brand / Identity ──────────────────────────────────────────────────────
-    pub const BRAND:       &'static str = "🌊"; // Fade's signature
+    pub const BRAND:       &'static str = "<:hermes:1541085373764206674>"; // Fade's signature
     pub const STAR:        &'static str = "✦";  // decorative accent (no variation selector)
     pub const SPARK:       &'static str = "✧";  // lighter accent
     pub const CROWN:       &'static str = "◈";  // owner / top rank

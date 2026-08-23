@@ -28,10 +28,19 @@ pub async fn run(
         default_prefix
     };
 
-    let header = format!("**{} Help Center** 📖\nHere is everything I can do!\n\n✨ **Prefix:** `{}`", bot_name, pfx);
+    use crate::components::emoji::E;
 
-    let music_cmds = "🎵 **Music**\n`play`, `pause`, `resume`, `skip`, `stop`, `join`, `leave`, `queue`, `nowplaying`, `volume`, `seek`, `loop`, `shuffle`, `remove`, `move`, `clear`, `lyrics`";
-    let util_cmds = "🛠️ **Utility**\n`ping`, `info`, `avatar`, `serveravatar`, `serverbanner`, `serverbio`, `24/7`, `premium`, `noprefix`, `setprefix`";
+    let header = format!("{} **{} Help Center**\nExplore all the commands available to you.\n\n{} **Server Prefix:** `{}`", E::BRAND, bot_name, E::SPARK, pfx);
+
+    let music_cmds = format!(
+        "{} **Music & Audio**\n> `play` `pause` `resume` `skip` `stop` `queue`\n> `nowplaying` `volume` `seek` `loop` `shuffle`\n> `remove` `move` `clear` `lyrics` `join` `leave`",
+        E::MUSIC
+    );
+    
+    let util_cmds = format!(
+        "{} **Utility & Config**\n> `ping` `info` `avatar` `serveravatar` `serverbanner`\n> `serverbio` `24/7` `premium` `noprefix` `setprefix`",
+        E::SETTINGS
+    );
 
     let card = FadeResponse::new().container(None, |c| {
         c.section(|s| {
@@ -43,7 +52,8 @@ pub async fn run(
         .separator(false)
         .text(util_cmds)
         .action_row(|r| {
-            r.link("https://discord.com/invite/SmdUGNXjYv", "Support Server")
+            r.button_emoji("help_docs", "Documentation", crate::components::v2::ButtonStyle::Secondary, "📚")
+             .link("https://discord.com/invite/SmdUGNXjYv", "Support Server")
         })
     });
 
