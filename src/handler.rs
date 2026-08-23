@@ -175,13 +175,27 @@ impl EventHandler for Handler {
         let mut was_mention = false;
         let mut rest_str = content.as_str();
         
-        let mentions_bot = msg.mentions_user_id(bot_id) || msg.mentions_me(&ctx.http).await.unwrap_or(false);
+        let mentions_bot = msg.mentions_user_id(bot_id) 
+            || msg.mentions_me(&ctx.http).await.unwrap_or(false)
+            || content.contains(&bot_id.to_string())
+            || content.contains("1398578769438048368");
+            
+        // Fallback for literal text mentions (if Discord didn't format them as a real mention)
+        if !mentions_bot {
+            if let Some(r) = rest_str.strip_prefix("@leos") {
+                rest_str = r.trim_start();
+                was_mention = true;
+            } else if let Some(r) = rest_str.strip_prefix("@hermes.bot") {
+                rest_str = r.trim_start();
+                was_mention = true;
+            }
+        }
         
-        if mentions_bot {
+        if mentions_bot || was_mention {
             let re = regex::Regex::new(r"<@!?&?[0-9]+>").unwrap();
             
-            // If the message is ONLY mentions (e.g. they just pinged the bot's role)
-            if re.replace_all(content.as_str(), "").trim().is_empty() {
+            // If the message is ONLY mentions or the literal fallbacks
+            if re.replace_all(rest_str, "").trim().is_empty() {
                 rest_str = "";
                 was_mention = true;
             } else {
