@@ -47,9 +47,15 @@ pub async fn run(
         }
     }
 
-    let is_whitelisted = {
+    let (is_whitelisted, bound_list) = {
         let state_guard = state.read().await;
         let mut db = state_guard.db.write().await;
+        
+        // Remove from blacklist if it's there
+        if let Some(bl) = db.blacklisted_channels.get_mut(&guild_id.get()) {
+            bl.remove(&target_channel.get());
+        }
+
         let list = db.whitelisted_channels.entry(guild_id.get()).or_default();
         
         let currently = list.contains(&target_channel.get());
@@ -59,16 +65,24 @@ pub async fn run(
             list.insert(target_channel.get());
         }
         
+        let bound_list: Vec<String> = list.iter().map(|id| format!("<#{}>", id)).collect();
         db.save();
-        !currently
+        (!currently, bound_list)
     };
 
     use crate::components::emoji::E;
-    let msg = if is_whitelisted {
+    let mut msg = if is_whitelisted {
         format!("{} <#{}> is now **whitelisted/bound**. I will ONLY listen to commands in bound channels.", E::OK, target_channel.get())
     } else {
         format!("{} <#{}> is **no longer whitelisted**.", E::OK, target_channel.get())
     };
+
+    if !bound_list.is_empty() {
+        msg.push_str("\n\n**Currently Bound Channels:**\n");
+        msg.push_str(&bound_list.join(", "));
+    } else {
+        msg.push_str("\n\n*There are currently no bound channels, so I will listen everywhere.*");
+    }
 
     let card = FadeResponse::new().container(None, |c| c.text(msg));
     cmd.edit(ctx, &card).await?;

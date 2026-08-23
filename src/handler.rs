@@ -289,7 +289,7 @@ impl EventHandler for Handler {
                     }
                 }
                 
-                let (is_whitelisted, has_whitelists, is_blacklisted, admin_bypass) = {
+                let (is_whitelisted, has_whitelists, is_blacklisted, admin_bypass, bound_str) = {
                     let state_guard = state.read().await;
                     let db = state_guard.db.read().await;
                     
@@ -297,19 +297,22 @@ impl EventHandler for Handler {
                     let is_whitelisted = wl.map(|w| w.contains(&channel_id.get())).unwrap_or(false);
                     let has_whitelists = wl.map(|w| !w.is_empty()).unwrap_or(false);
                     
+                    let bound_str = wl.map(|w| w.iter().map(|id| format!("<#{}>", id)).collect::<Vec<_>>().join(", ")).unwrap_or_default();
+                    
                     let bl = db.blacklisted_channels.get(&guild_id.get());
                     let is_blacklisted = bl.map(|b| b.contains(&channel_id.get())).unwrap_or(false);
                     
                     let admin_bypass = db.admin_bypass.get(&guild_id.get()).copied().unwrap_or(true);
                     
-                    (is_whitelisted, has_whitelists, is_blacklisted, admin_bypass)
+                    (is_whitelisted, has_whitelists, is_blacklisted, admin_bypass, bound_str)
                 };
                 
                 let bypass = has_admin && admin_bypass;
                 
                 if !bypass {
                     if has_whitelists && !is_whitelisted {
-                        let _ = msg.reply(&ctx.http, "⚠️ Commands are restricted to bound channels only.").await.map(|m| {
+                        let msg_text = format!("⚠️ Commands are restricted to bound channels only.\n**Allowed Channels:** {}", bound_str);
+                        let _ = msg.reply(&ctx.http, &msg_text).await.map(|m| {
                             let http = ctx.http.clone();
                             tokio::spawn(async move {
                                 tokio::time::sleep(tokio::time::Duration::from_secs(5)).await;

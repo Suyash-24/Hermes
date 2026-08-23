@@ -278,7 +278,7 @@ pub async fn dispatch(
             has_admin = member.permissions.unwrap_or(serenity::model::Permissions::empty()).contains(serenity::model::Permissions::ADMINISTRATOR);
         }
         
-        let (is_whitelisted, has_whitelists, is_blacklisted, admin_bypass) = {
+        let (is_whitelisted, has_whitelists, is_blacklisted, admin_bypass, bound_str) = {
             let state_guard = state.read().await;
             let db = state_guard.db.read().await;
             
@@ -286,20 +286,23 @@ pub async fn dispatch(
             let is_whitelisted = wl.map(|w| w.contains(&channel_id.get())).unwrap_or(false);
             let has_whitelists = wl.map(|w| !w.is_empty()).unwrap_or(false);
             
+            let bound_str = wl.map(|w| w.iter().map(|id| format!("<#{}>", id)).collect::<Vec<_>>().join(", ")).unwrap_or_default();
+            
             let bl = db.blacklisted_channels.get(&guild_id.get());
             let is_blacklisted = bl.map(|b| b.contains(&channel_id.get())).unwrap_or(false);
             
             let admin_bypass = db.admin_bypass.get(&guild_id.get()).copied().unwrap_or(true);
             
-            (is_whitelisted, has_whitelists, is_blacklisted, admin_bypass)
+            (is_whitelisted, has_whitelists, is_blacklisted, admin_bypass, bound_str)
         };
         
         let bypass = has_admin && admin_bypass;
         
         if !bypass {
             if has_whitelists && !is_whitelisted {
+                let msg_text = format!("⚠️ Commands are restricted to bound channels only.\n**Allowed Channels:** {}", bound_str);
                 let msg = serenity::builder::CreateInteractionResponseMessage::new()
-                    .content("⚠️ Commands are restricted to bound channels only.")
+                    .content(msg_text)
                     .ephemeral(true);
                 let _ = cmd.create_response(&ctx.http, serenity::builder::CreateInteractionResponse::Message(msg)).await;
                 return Ok(()); // silently exit
