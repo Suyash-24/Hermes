@@ -180,8 +180,6 @@ impl EventHandler for Handler {
             || content.contains(&bot_id.to_string())
             || content.contains("1398578769438048368");
             
-        tracing::info!("DEBUG_MSG: content='{}', mentions_bot={}, mentions={:?}, bot_id={}", content, mentions_bot, msg.mentions.iter().map(|u| u.id.get()).collect::<Vec<_>>(), bot_id.get());
-
         // Fallback for literal text mentions (if Discord didn't format them as a real mention)
         if !mentions_bot {
             if let Some(r) = rest_str.strip_prefix("@leos") {
@@ -236,11 +234,19 @@ impl EventHandler for Handler {
                 if was_mention {
                     use crate::components::v2::{FadeResponse, respond_to_channel};
                     
-                    let pfx = custom_prefix.unwrap_or(default_prefix);
-                    let text = format!("Hi there! My prefix in this server is `{}`\nYou can also use slash commands (/) or just mention me!", pfx);
+                    let pfx = custom_prefix.clone().unwrap_or(default_prefix.clone());
+                    let bot_name = ctx.cache.current_user().name.clone();
+                    let bot_avatar = ctx.cache.current_user().face();
+                    
+                    let section_text = format!("**Hey there!** ✨\nHello! I'm **{}**, an all-in-one community bot.\n\n✨ **Prefix:** `{}`\n\n✨ You can also run commands by tagging me! e.g. `<@{}> play lo-fi`", bot_name, pfx, bot_id);
+                    let help_text = "Need help? Use the `help` command to see everything I can do!".to_string();
                     
                     let card = FadeResponse::new().container(None, |c| {
-                        c.text(text)
+                        c.section(|s| {
+                             s.text(section_text)
+                              .thumbnail(bot_avatar)
+                         })
+                         .text(help_text)
                          .action_row(|r| {
                              r.link("https://discord.com/invite/SmdUGNXjYv", "Support Server")
                          })
