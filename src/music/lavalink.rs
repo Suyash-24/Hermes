@@ -98,6 +98,60 @@ pub async fn search_one(
     Ok(track)
 }
 
+/// Search and return a related track for autoplay, avoiding the exact last track.
+pub async fn search_autoplay(
+    lavalink: &LavalinkClient,
+    guild_id: GuildId,
+    query: &str,
+    last_track_title: &str,
+    requested_by: u64,
+    requested_by_name: &str,
+) -> BotResult<TrackInfo> {
+    let search_query = SearchEngines::YouTube.to_query(query).map_err(|e| BotError::Lavalink(e.to_string()))?;
+
+    let results = lavalink
+        .load_tracks(guild_id, &search_query)
+        .await
+        .map_err(|e| BotError::Lavalink(e.to_string()))?;
+
+    use lavalink_rs::model::track::TrackLoadData;
+    let track = match results.data {
+        Some(TrackLoadData::Search(hits)) => {
+            // Find the first track that is not the exact same title as the last track
+            let last_lower = last_track_title.to_lowercase();
+            let mut selected = None;
+            
+            for hit in hits.into_iter() {
+                if hit.info.title.to_lowercase() != last_lower {
+                    selected = Some(hit);
+                    break;
+                }
+            }
+            
+            let track_data = selected.ok_or_else(|| BotError::NoResults(query.to_string()))?;
+            lava_to_track(track_data, requested_by, requested_by_name)
+        }
+        Some(TrackLoadData::Playlist(pl)) => {
+            let last_lower = last_track_title.to_lowercase();
+            let mut selected = None;
+            
+            for hit in pl.tracks.into_iter() {
+                if hit.info.title.to_lowercase() != last_lower {
+                    selected = Some(hit);
+                    break;
+                }
+            }
+            
+            let track_data = selected.ok_or_else(|| BotError::NoResults(query.to_string()))?;
+            lava_to_track(track_data, requested_by, requested_by_name)
+        }
+        Some(TrackLoadData::Track(t)) => lava_to_track(t, requested_by, requested_by_name),
+        _ => return Err(BotError::NoResults(query.to_string())),
+    };
+
+    Ok(track)
+}
+
 /// Search and return all results from a playlist URL or search query.
 pub async fn search_all(
     lavalink: &LavalinkClient,

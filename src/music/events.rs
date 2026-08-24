@@ -109,10 +109,11 @@ pub fn track_end_event(
                     let autoplay_user_id = 0u64;
                     let autoplay_user_name = "Autoplay".to_string();
 
-                    match crate::music::lavalink::search_one(
+                    match crate::music::lavalink::search_autoplay(
                         &client,
                         guild_id,
                         &search_query,
+                        &title,
                         autoplay_user_id,
                         &autoplay_user_name,
                     ).await {
