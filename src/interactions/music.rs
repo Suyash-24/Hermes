@@ -121,13 +121,20 @@ pub async fn handle(
                     let loading_card = build_success_card("Searching for related track...");
                     edit_with_card(ctx, component, &loading_card).await?;
 
-                    match crate::music::lavalink::search_autoplay(
-                        &lavalink,
+                    let (puter_token, lastfm_key, history) = {
+                        let s = state.read().await;
+                        let h = queue_arc.lock().await.history.clone();
+                        (s.puter_auth_token.clone(), s.lastfm_api_key.clone(), h)
+                    };
+
+                    match crate::music::autoplay::prefetch_autoplay(
+                        lavalink.clone(),
                         guild_id,
-                        &search_query,
-                        &title,
-                        0,
-                        "Autoplay",
+                        title.clone(),
+                        author,
+                        history,
+                        puter_token,
+                        lastfm_key,
                     ).await {
                         Ok(track) => {
                             lava::play_track(&lavalink, guild_id, &track).await?;

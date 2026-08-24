@@ -67,13 +67,20 @@ pub async fn run(
 
             cmd.defer(ctx).await?;
 
-            match crate::music::lavalink::search_autoplay(
-                &mc.lavalink,
+            let (puter_token, lastfm_key, history) = {
+                let s = state.read().await;
+                let h = mc.queue.lock().await.history.clone();
+                (s.puter_auth_token.clone(), s.lastfm_api_key.clone(), h)
+            };
+
+            match crate::music::autoplay::prefetch_autoplay(
+                mc.lavalink.clone(),
                 mc.guild_id,
-                &search_query,
-                &title,
-                autoplay_user_id,
-                &autoplay_user_name,
+                title.clone(),
+                author,
+                history,
+                puter_token,
+                lastfm_key,
             ).await {
                 Ok(track) => {
                     lava::play_track(&mc.lavalink, mc.guild_id, &track).await?;
