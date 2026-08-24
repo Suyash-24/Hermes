@@ -2,7 +2,7 @@
 ///
 /// If the bot is not in a voice channel, it joins the invoker's VC first.
 /// Adds to queue if something is already playing.
-use super::music_cards::{build_error_card, build_now_playing_card, build_playlist_queued_card, build_queued_card};
+use super::music_cards::{build_error_card, build_now_playing_card, build_playlist_queued_card, build_queued_card, build_success_card};
 use super::music_helpers::resolve_music_context;
 
 use crate::error::BotResult;
@@ -93,22 +93,63 @@ pub async fn run(
     let requested_by = cmd.user_id().get();
     let requested_by_name = cmd.user_name();
 
-    let tracks = match lava::search_all(
-        &mc.lavalink,
-        mc.guild_id,
-        &query,
-        requested_by,
-        &requested_by_name,
-    )
-    .await
-    {
-        Ok(t) => t,
-        Err(e) => {
-            let card = build_error_card(&e.to_string());
+    let mut tracks = Vec::new();
+    let mut spotify_handled = false;
+
+    if let Some(playlist_id) = crate::spotify::extract_playlist_id(&query) {
+        let spotify_client = {
+            let s = state.read().await;
+            s.spotify.clone()
+        };
+
+        if let Some(spotify) = spotify_client {
+            let card = build_success_card(&format!("{} Loading Spotify Playlist... this might take a moment.", crate::components::emoji::E::LOADING));
             cmd.edit(ctx, &card).await?;
-            return Ok(());
+
+            match spotify.get_playlist_search_queries(&playlist_id, 100).await {
+                Ok(queries) => {
+                    for q in queries {
+                        let search_str = format!("ytsearch:{}", q);
+                        if let Ok(track) = lava::search_one(
+                            &mc.lavalink,
+                            mc.guild_id,
+                            &search_str,
+                            requested_by,
+                            &requested_by_name,
+                        ).await {
+                            tracks.push(track);
+                        }
+                    }
+                    if !tracks.is_empty() {
+                        spotify_handled = true;
+                    }
+                }
+                Err(e) => {
+                    tracing::error!("Failed to fetch spotify playlist: {e}");
+                    // fallback to normal resolution
+                }
+            }
         }
-    };
+    }
+
+    if !spotify_handled {
+        tracks = match lava::search_all(
+            &mc.lavalink,
+            mc.guild_id,
+            &query,
+            requested_by,
+            &requested_by_name,
+        )
+        .await
+        {
+            Ok(t) => t,
+            Err(e) => {
+                let card = build_error_card(&e.to_string());
+                cmd.edit(ctx, &card).await?;
+                return Ok(());
+            }
+        };
+    }
 
     // Determine if playing immediately or queueing.
     let is_currently_playing = {

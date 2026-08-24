@@ -37,6 +37,9 @@ pub struct AppState {
 
     /// Per-guild music queues.
     pub music_queues: QueueMap,
+
+    /// Spotify API client (if configured)
+    pub spotify: Option<Arc<crate::spotify::SpotifyClient>>,
 }
 
 #[derive(Debug, Clone)]
@@ -53,12 +56,21 @@ pub struct SessionData {
 
 impl AppState {
     pub fn new(config: Config) -> Arc<RwLock<Self>> {
+        let spotify_client = config.spotify.as_ref().map(|s| {
+            Arc::new(crate::spotify::SpotifyClient::new(
+                s.client_id.clone(),
+                s.client_secret.clone(),
+                s.refresh_token.clone(),
+            ))
+        });
+
         Arc::new(RwLock::new(Self {
             config,
             db: Arc::new(RwLock::new(crate::db::Database::load())),
             cooldowns: DashMap::new(),
             sessions: DashMap::new(),
             music_queues: DashMap::new(),
+            spotify: spotify_client,
         }))
     }
 }

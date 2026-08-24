@@ -13,6 +13,7 @@ pub struct Config {
     pub gateway: GatewayConfig,
     pub logging: LoggingConfig,
     pub lavalink: LavalinkConfig,
+    pub spotify: Option<SpotifyConfig>,
 
     /// Discord bot token — always sourced from the environment (never the toml).
     #[serde(skip)]
@@ -65,6 +66,13 @@ impl LavalinkConfig {
     }
 }
 
+#[derive(Debug, Deserialize, Clone)]
+pub struct SpotifyConfig {
+    pub client_id: String,
+    pub client_secret: String,
+    pub refresh_token: String,
+}
+
 // ── Loader ────────────────────────────────────────────────────────────────────
 
 impl Config {
@@ -100,7 +108,22 @@ impl Config {
             cfg.lavalink.host = host;
         }
         if let Ok(port) = std::env::var("LAVALINK_PORT") {
-            cfg.lavalink.port = port.parse().context("LAVALINK_PORT must be a number")?;
+            if let Ok(p) = port.parse() {
+                cfg.lavalink.port = p;
+            }
+        }
+
+        // Spotify env overrides
+        if let (Ok(client_id), Ok(client_secret), Ok(refresh_token)) = (
+            std::env::var("SPOTIFY_CLIENT_ID"),
+            std::env::var("SPOTIFY_CLIENT_SECRET"),
+            std::env::var("SPOTIFY_REFRESH_TOKEN"),
+        ) {
+            cfg.spotify = Some(SpotifyConfig {
+                client_id,
+                client_secret,
+                refresh_token,
+            });
         }
 
         Ok(cfg)

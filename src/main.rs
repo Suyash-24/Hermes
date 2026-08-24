@@ -16,6 +16,7 @@ mod handler;
 mod interactions;
 mod logging;
 mod music;
+mod spotify;
 mod state;
 mod utils;
 
