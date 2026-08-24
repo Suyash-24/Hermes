@@ -102,7 +102,7 @@ pub async fn run(
         format!("{} 24/7 mode **Disabled**. The bot will leave the voice channel when stopped or queue ends.", crate::components::emoji::E::ERROR)
     };
 
-    let card = build_success_card(msg);
+    let card = build_success_card(&msg);
     cmd.respond(ctx, &card).await?;
 
     Ok(())

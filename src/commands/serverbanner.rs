@@ -126,7 +126,7 @@ pub async fn run(
                 } else {
                     format!("{} Successfully updated the bot's server banner!", crate::components::emoji::E::OK)
                 };
-                let card = build_success_card(msg);
+                let card = build_success_card(&msg);
                 cmd.respond(ctx, &card).await?;
             } else {
                 let err_text = response.text().await.unwrap_or_else(|_| "Unknown error".to_string());
