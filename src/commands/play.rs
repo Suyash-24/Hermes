@@ -128,9 +128,15 @@ pub async fn run(
                 }
                 Err(e) => {
                     tracing::error!("Failed to fetch spotify playlist: {e}");
-                    // fallback to normal resolution
+                    let card = build_error_card("Failed to contact Spotify API. Check bot logs for credential errors.");
+                    cmd.edit(ctx, &card).await?;
+                    return Ok(());
                 }
             }
+        } else {
+            let card = build_error_card("Spotify features are not configured. The bot owner needs to set Spotify environment variables.");
+            cmd.edit(ctx, &card).await?;
+            return Ok(());
         }
     }
 
