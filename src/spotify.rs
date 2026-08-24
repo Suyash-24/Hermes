@@ -22,6 +22,7 @@ struct SpotifyPlaylistItem {
 #[derive(Debug, Deserialize)]
 struct SpotifyTrack {
     name: String,
+    #[serde(default)]
     artists: Vec<SpotifyArtist>,
 }
 
@@ -50,7 +51,7 @@ impl SpotifyClient {
         }
     }
 
-    async fn get_access_token(&self) -> Result<String, reqwest::Error> {
+    async fn get_access_token(&self) -> anyhow::Result<String> {
         {
             let cache = self.cached_token.lock().await;
             if let Some((token, expiry)) = cache.as_ref() {
@@ -67,14 +68,24 @@ impl SpotifyClient {
             ("client_secret", self.client_secret.as_str()),
         ];
 
-        let resp: SpotifyTokenResponse = self
+        let res = self
             .http
             .post("https://accounts.spotify.com/api/token")
+            .basic_auth(&self.client_id, Some(&self.client_secret))
             .form(&params)
             .send()
-            .await?
-            .json()
             .await?;
+            
+        let status = res.status();
+        let text = res.text().await?;
+        
+        let resp: SpotifyTokenResponse = match serde_json::from_str(&text) {
+            Ok(r) => r,
+            Err(e) => {
+                tracing::error!("Failed to decode Spotify Token Response (Status {}): {text}", status);
+                anyhow::bail!("Failed to decode token response: {}", e);
+            }
+        };
 
         let expiry = Instant::now() + Duration::from_secs(resp.expires_in.saturating_sub(60));
         *self.cached_token.lock().await = Some((resp.access_token.clone(), expiry));
@@ -88,7 +99,7 @@ impl SpotifyClient {
         &self,
         playlist_id: &str,
         max_tracks: usize,
-    ) -> Result<Vec<String>, reqwest::Error> {
+    ) -> anyhow::Result<Vec<String>> {
         let token = self.get_access_token().await?;
         let mut queries = Vec::new();
         let mut offset: u32 = 0;
@@ -99,14 +110,23 @@ impl SpotifyClient {
                 "https://api.spotify.com/v1/playlists/{playlist_id}/tracks?limit={limit}&offset={offset}"
             );
 
-            let resp: SpotifyPlaylistTracksResponse = self
+            let res = self
                 .http
                 .get(&url)
                 .bearer_auth(&token)
                 .send()
-                .await?
-                .json()
                 .await?;
+                
+            let status = res.status();
+            let text = res.text().await?;
+            
+            let resp: SpotifyPlaylistTracksResponse = match serde_json::from_str(&text) {
+                Ok(r) => r,
+                Err(e) => {
+                    tracing::error!("Failed to decode Spotify Playlist Response (Status {}): {text}", status);
+                    anyhow::bail!("Failed to decode playlist response: {}", e);
+                }
+            };
 
             let batch_len = resp.items.len();
 
