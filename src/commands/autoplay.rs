@@ -2,7 +2,7 @@
 ///
 /// When enabled, the bot will automatically search for and queue a related
 /// song when the queue runs dry, based on the last track that was playing.
-use super::music_cards::{build_error_card, build_success_card};
+use super::music_cards::build_success_card;
 use super::music_helpers::resolve_music_context;
 
 use crate::error::BotResult;
@@ -17,10 +17,7 @@ pub async fn run(
     state: Arc<RwLock<AppState>>,
     _args: &[&str],
 ) -> BotResult<()> {
-    let mc = match resolve_music_context(ctx, cmd, &state, false).await? {
-        Some(mc) => mc,
-        None => return Ok(()),
-    };
+    let mc = resolve_music_context(ctx, cmd, &state, false).await?;
 
     let new_state = {
         let mut q = mc.queue.lock().await;

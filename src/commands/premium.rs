@@ -60,17 +60,18 @@ pub async fn run(
     // Extract action, guild, duration from slash options OR prefix args
     let (action, guild_str, duration_str) = match cmd {
         crate::commands::context::CommandContext::Slash(slash) => {
-            let action = slash.data.options.iter()
+            let options = slash.data.options();
+            let action = options.iter()
                 .find(|o| o.name == "action")
-                .and_then(|o| if let serenity::model::application::ResolvedValue::String(s) = &o.value { Some(s.as_str()) } else { None })
+                .and_then(|o| if let serenity::model::application::ResolvedValue::String(s) = &o.value { Some(*s) } else { None })
                 .unwrap_or("");
-            let guild = slash.data.options.iter()
+            let guild = options.iter()
                 .find(|o| o.name == "guild")
-                .and_then(|o| if let serenity::model::application::ResolvedValue::String(s) = &o.value { Some(s.as_str()) } else { None })
+                .and_then(|o| if let serenity::model::application::ResolvedValue::String(s) = &o.value { Some(*s) } else { None })
                 .unwrap_or("");
-            let dur = slash.data.options.iter()
+            let dur = options.iter()
                 .find(|o| o.name == "duration")
-                .and_then(|o| if let serenity::model::application::ResolvedValue::String(s) = &o.value { Some(s.as_str()) } else { None })
+                .and_then(|o| if let serenity::model::application::ResolvedValue::String(s) = &o.value { Some(*s) } else { None })
                 .unwrap_or("");
             (action.to_string(), guild.to_string(), dur.to_string())
         }
