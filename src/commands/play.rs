@@ -103,7 +103,7 @@ pub async fn run(
         };
 
         if let Some(spotify) = spotify_client {
-            let card = build_success_card(&format!("{} Loading Spotify Playlist... this might take a moment.", crate::components::emoji::E::LOADING));
+            let card = build_success_card(&format!("{} Loading Spotify Playlist... this might take a moment.", crate::components::emoji::E::REFRESH));
             cmd.edit(ctx, &card).await?;
 
             match spotify.get_playlist_search_queries(&playlist_id, 100).await {
