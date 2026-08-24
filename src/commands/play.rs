@@ -105,7 +105,7 @@ pub async fn run(
         Ok(t) => t,
         Err(e) => {
             if query.contains("spotify.com/playlist/") {
-                let card = build_error_card("Spotify playlist links are not supported directly by Lavalink due to API restrictions.");
+                let card = build_error_card("Spotify playlist links are not supported. You can use Spotify song and album links, and all YouTube links.");
                 cmd.edit(ctx, &card).await?;
                 return Ok(());
             }

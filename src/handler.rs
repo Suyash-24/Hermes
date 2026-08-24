@@ -40,6 +40,12 @@ impl EventHandler for Handler {
             "Fade is online"
         );
 
+        // Set the custom status
+        ctx.set_presence(
+            Some(serenity::gateway::ActivityData::streaming("384kbps Opus Audio", "https://twitch.tv/discord")),
+            serenity::model::user::OnlineStatus::Online,
+        );
+
         // Register slash commands globally.
         // During development, prefer guild-scoped registration (instant update).
         // Global registration can take up to 1 hour to propagate.
