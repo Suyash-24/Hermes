@@ -138,13 +138,13 @@ pub async fn handle(
                             };
                             let card = build_now_playing_card(&track, 0, loop_mode, shuffled, volume, queue_len, false);
                             
-                            // Edit the interaction again with the actual card
-                            edit_with_card(ctx, component, &card).await?;
+                            // Edit the interaction again with the actual card using update_with_card
+                            update_with_card(ctx, component, &card).await?;
                         }
                         Err(_) => {
                             lava::stop(&lavalink, guild_id).await?;
                             let card = build_success_card("⏭ Skipped — queue ended (autoplay found no related tracks).");
-                            edit_with_card(ctx, component, &card).await?;
+                            update_with_card(ctx, component, &card).await?;
                         }
                     }
                 } else {
@@ -325,6 +325,32 @@ async fn edit_with_card(
         )
         .await
         .map_err(BotError::Discord)?;
+
+    let mut flags = IS_COMPONENTS_V2;
+    if card.ephemeral {
+        flags |= 64;
+    }
+
+    let body = serde_json::json!({
+        "content": null,
+        "flags": flags,
+        "components": card.components_value(),
+    });
+
+    ctx.http
+        .edit_original_interaction_response(&component.token, &body, vec![])
+        .await
+        .map_err(BotError::Discord)?;
+
+    Ok(())
+}
+
+async fn update_with_card(
+    ctx: &Context,
+    component: &ComponentInteraction,
+    card: &crate::components::v2::FadeResponse,
+) -> BotResult {
+    use crate::components::v2::IS_COMPONENTS_V2;
 
     let mut flags = IS_COMPONENTS_V2;
     if card.ephemeral {
