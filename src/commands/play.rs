@@ -93,71 +93,28 @@ pub async fn run(
     let requested_by = cmd.user_id().get();
     let requested_by_name = cmd.user_name();
 
-    let mut tracks = Vec::new();
-    let mut spotify_handled = false;
-
-    if let Some(playlist_id) = crate::spotify::extract_playlist_id(&query) {
-        let spotify_client = {
-            let s = state.read().await;
-            s.spotify.clone()
-        };
-
-        if let Some(spotify) = spotify_client {
-            let card = build_success_card(&format!("{} Loading Spotify Playlist... this might take a moment.", crate::components::emoji::E::REFRESH));
-            cmd.edit(ctx, &card).await?;
-
-            match spotify.get_playlist_search_queries(&playlist_id, 100).await {
-                Ok(queries) => {
-                    for q in queries {
-                        if let Ok(track) = lava::search_one(
-                            &mc.lavalink,
-                            mc.guild_id,
-                            &q,
-                            requested_by,
-                            &requested_by_name,
-                        ).await {
-                            tracks.push(track);
-                        }
-                    }
-                    spotify_handled = true;
-                    if tracks.is_empty() {
-                        let card = build_error_card("Could not find any tracks from the Spotify playlist on YouTube.");
-                        cmd.edit(ctx, &card).await?;
-                        return Ok(());
-                    }
-                }
-                Err(e) => {
-                    tracing::error!("Failed to fetch spotify playlist: {e}");
-                    let card = build_error_card("Failed to contact Spotify API. Check bot logs for credential errors.");
-                    cmd.edit(ctx, &card).await?;
-                    return Ok(());
-                }
-            }
-        } else {
-            let card = build_error_card("Spotify features are not configured. The bot owner needs to set Spotify environment variables.");
-            cmd.edit(ctx, &card).await?;
-            return Ok(());
-        }
-    }
-
-    if !spotify_handled {
-        tracks = match lava::search_all(
-            &mc.lavalink,
-            mc.guild_id,
-            &query,
-            requested_by,
-            &requested_by_name,
-        )
-        .await
-        {
-            Ok(t) => t,
-            Err(e) => {
-                let card = build_error_card(&e.to_string());
+    let mut tracks = match lava::search_all(
+        &mc.lavalink,
+        mc.guild_id,
+        &query,
+        requested_by,
+        &requested_by_name,
+    )
+    .await
+    {
+        Ok(t) => t,
+        Err(e) => {
+            if query.contains("spotify.com/playlist/") {
+                let card = build_error_card("Spotify playlist links are not supported directly by Lavalink due to API restrictions.");
                 cmd.edit(ctx, &card).await?;
                 return Ok(());
             }
-        };
-    }
+            
+            let card = build_error_card(&e.to_string());
+            cmd.edit(ctx, &card).await?;
+            return Ok(());
+        }
+    };
 
     // Determine if playing immediately or queueing.
     let is_currently_playing = {
