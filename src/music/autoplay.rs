@@ -1,7 +1,7 @@
 use crate::error::{BotError, BotResult};
 use crate::music::lavalink::{search_autoplay, search_one};
 use lavalink_rs::client::LavalinkClient;
-use lavalink_rs::model::track::TrackInfo;
+use crate::music::queue::TrackInfo;
 use reqwest::Client;
 use serenity::model::id::GuildId;
 
