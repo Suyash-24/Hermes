@@ -110,6 +110,8 @@ pub struct GuildQueue {
     pub autoplay: bool,
     /// Pre-fetched related track for autoplay
     pub prepared_autoplay_track: Option<TrackInfo>,
+    /// History of recently played track URIs or titles to prevent loops
+    pub history: std::collections::VecDeque<String>,
 }
 
 impl GuildQueue {
@@ -143,6 +145,11 @@ impl GuildQueue {
             LoopMode::Queue => {
                 // Move current to back, then pop front.
                 if let Some(cur) = self.current.take() {
+                    if let Some(ref uri) = cur.uri {
+                        self.push_history(uri.clone());
+                    } else {
+                        self.push_history(cur.title.clone());
+                    }
                     self.tracks.push_back(cur);
                 }
                 let next = self.tracks.pop_front();
@@ -150,6 +157,13 @@ impl GuildQueue {
                 next
             }
             LoopMode::Off => {
+                if let Some(cur) = &self.current {
+                    if let Some(ref uri) = cur.uri {
+                        self.push_history(uri.clone());
+                    } else {
+                        self.push_history(cur.title.clone());
+                    }
+                }
                 let next = self.tracks.pop_front().or_else(|| self.prepared_autoplay_track.take());
                 self.current = next.clone();
                 next
@@ -157,12 +171,35 @@ impl GuildQueue {
         }
     }
 
+    /// Add to history, keeping max 15 items
+    fn push_history(&mut self, item: String) {
+        if self.history.len() >= 15 {
+            self.history.pop_front();
+        }
+        self.history.push_back(item);
+    }
+
     /// Skip n tracks (default 1). Returns the new current track.
     pub fn skip(&mut self, count: usize) -> Option<TrackInfo> {
         let count = count.max(1);
+        
+        if let Some(cur) = &self.current {
+            if let Some(ref uri) = cur.uri {
+                self.push_history(uri.clone());
+            } else {
+                self.push_history(cur.title.clone());
+            }
+        }
+        
         // Remove the ones we're skipping from the front.
         for _ in 0..count.saturating_sub(1) {
-            self.tracks.pop_front();
+            if let Some(t) = self.tracks.pop_front() {
+                if let Some(ref uri) = t.uri {
+                    self.push_history(uri.clone());
+                } else {
+                    self.push_history(t.title.clone());
+                }
+            }
         }
         self.loop_mode = LoopMode::Off; // Skip breaks loop-track mode
         let next = self.tracks.pop_front().or_else(|| self.prepared_autoplay_track.take());

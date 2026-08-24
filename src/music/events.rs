@@ -102,12 +102,15 @@ pub fn track_end_event(
                 if let (Some(title), Some(author)) = (last_track_title, last_track_author) {
                     let puter_token = state_lock.puter_auth_token.clone();
                     let lastfm_key = state_lock.lastfm_api_key.clone();
+                    
+                    let history = queue_arc.lock().await.history.clone();
 
                     match crate::music::autoplay::prefetch_autoplay(
                         client.clone(),
                         guild_id,
                         title,
                         author,
+                        history,
                         puter_token,
                         lastfm_key,
                     ).await {
@@ -327,15 +330,15 @@ pub fn track_start_event(
         }
 
         // --- Autoplay Prefetch ---
-        let (autoplay, queue_empty, puter_token, lastfm_key) = {
+        let (autoplay, queue_empty, history, puter_token, lastfm_key) = {
             let state_lock = data.state.read().await;
-            let (ap, empty) = if let Some(queue) = &queue_arc {
+            let (ap, empty, hist) = if let Some(queue) = &queue_arc {
                 let q_lock = queue.lock().await;
-                (q_lock.autoplay, q_lock.tracks.is_empty())
+                (q_lock.autoplay, q_lock.tracks.is_empty(), q_lock.history.clone())
             } else {
-                (false, false)
+                (false, false, std::collections::VecDeque::new())
             };
-            (ap, empty, state_lock.puter_auth_token.clone(), state_lock.lastfm_api_key.clone())
+            (ap, empty, hist, state_lock.puter_auth_token.clone(), state_lock.lastfm_api_key.clone())
         };
 
         if autoplay && queue_empty {
@@ -351,6 +354,7 @@ pub fn track_start_event(
                     g_id,
                     t_title,
                     t_author,
+                    history,
                     puter_token,
                     lastfm_key,
                 ).await {

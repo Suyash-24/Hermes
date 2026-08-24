@@ -103,7 +103,7 @@ pub async fn search_autoplay(
     lavalink: &LavalinkClient,
     guild_id: GuildId,
     query: &str,
-    last_track_title: &str,
+    history: &std::collections::VecDeque<String>,
     requested_by: u64,
     requested_by_name: &str,
 ) -> BotResult<TrackInfo> {
@@ -117,31 +117,27 @@ pub async fn search_autoplay(
     use lavalink_rs::model::track::TrackLoadData;
     let track = match results.data {
         Some(TrackLoadData::Search(hits)) => {
-            // Find the first track that is not the exact same title as the last track
-            let last_lower = last_track_title.to_lowercase();
             let mut selected = None;
-            
             for hit in hits.into_iter() {
-                if hit.info.title.to_lowercase() != last_lower {
+                let hit_title = hit.info.title.to_lowercase();
+                // Check if hit_title is in history
+                if !history.iter().any(|h| h.eq_ignore_ascii_case(&hit_title)) {
                     selected = Some(hit);
                     break;
                 }
             }
-            
             let track_data = selected.ok_or_else(|| BotError::NoResults(query.to_string()))?;
             lava_to_track(track_data, requested_by, requested_by_name)
         }
         Some(TrackLoadData::Playlist(pl)) => {
-            let last_lower = last_track_title.to_lowercase();
             let mut selected = None;
-            
             for hit in pl.tracks.into_iter() {
-                if hit.info.title.to_lowercase() != last_lower {
+                let hit_title = hit.info.title.to_lowercase();
+                if !history.iter().any(|h| h.eq_ignore_ascii_case(&hit_title)) {
                     selected = Some(hit);
                     break;
                 }
             }
-            
             let track_data = selected.ok_or_else(|| BotError::NoResults(query.to_string()))?;
             lava_to_track(track_data, requested_by, requested_by_name)
         }
