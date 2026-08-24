@@ -57,22 +57,46 @@ pub async fn run(
         return Ok(());
     }
 
-    if args.is_empty() {
-        let card = build_error_card("Usage: `premium <add|remove> <guild_id> [duration]`\nExample: `premium add 12345 30d` or `premium add 12345 lifetime`");
+    // Extract action, guild, duration from slash options OR prefix args
+    let (action, guild_str, duration_str) = match cmd {
+        crate::commands::context::CommandContext::Slash(slash) => {
+            let action = slash.data.options.iter()
+                .find(|o| o.name == "action")
+                .and_then(|o| if let serenity::model::application::ResolvedValue::String(s) = &o.value { Some(s.as_str()) } else { None })
+                .unwrap_or("");
+            let guild = slash.data.options.iter()
+                .find(|o| o.name == "guild")
+                .and_then(|o| if let serenity::model::application::ResolvedValue::String(s) = &o.value { Some(s.as_str()) } else { None })
+                .unwrap_or("");
+            let dur = slash.data.options.iter()
+                .find(|o| o.name == "duration")
+                .and_then(|o| if let serenity::model::application::ResolvedValue::String(s) = &o.value { Some(s.as_str()) } else { None })
+                .unwrap_or("");
+            (action.to_string(), guild.to_string(), dur.to_string())
+        }
+        crate::commands::context::CommandContext::Prefix(_) => {
+            if args.is_empty() {
+                let card = build_error_card("Usage: `premium <add|remove> <guild_id> [duration]`\nExample: `premium add 12345 30d` or `premium add 12345 lifetime`");
+                cmd.respond(ctx, &card).await?;
+                return Ok(());
+            }
+            let action = args[0].to_string();
+            let guild = args.get(1).copied().unwrap_or("").to_string();
+            let dur = args.get(2).copied().unwrap_or("").to_string();
+            (action, guild, dur)
+        }
+    };
+
+    if action.is_empty() || guild_str.is_empty() {
+        let card = build_error_card("Usage: `/premium add <guild_id> <duration>` or `/premium remove <guild_id>`");
         cmd.respond(ctx, &card).await?;
         return Ok(());
     }
 
-    let action = args[0].to_lowercase();
-    
-    if action == "add" {
-        if args.len() < 3 {
-            let card = build_error_card("Please provide a guild ID and duration.\nExample: `premium add 12345 30d` or `premium add 12345 lifetime`");
-            cmd.respond(ctx, &card).await?;
-            return Ok(());
-        }
+    let action = action.to_lowercase();
 
-        let guild_id: u64 = match args[1].parse() {
+    if action == "add" {
+        let guild_id: u64 = match guild_str.parse() {
             Ok(id) => id,
             Err(_) => {
                 let card = build_error_card("Invalid Guild ID.");
@@ -81,8 +105,9 @@ pub async fn run(
             }
         };
 
-        let duration_str = args[2];
-        let duration_secs = match parse_duration(duration_str) {
+        // Allow empty duration to mean "lifetime"
+        let dur_input = if duration_str.trim().is_empty() { "lifetime" } else { duration_str.trim() };
+        let duration_secs = match parse_duration(dur_input) {
             Some(d) => d,
             None => {
                 let card = build_error_card("Invalid duration format. Use `lifetime`, `30d`, `1y`, etc.");
@@ -111,13 +136,7 @@ pub async fn run(
         cmd.respond(ctx, &card).await?;
         
     } else if action == "remove" {
-        if args.len() < 2 {
-            let card = build_error_card("Please provide a guild ID.\nExample: `premium remove 12345`");
-            cmd.respond(ctx, &card).await?;
-            return Ok(());
-        }
-
-        let guild_id: u64 = match args[1].parse() {
+        let guild_id: u64 = match guild_str.parse() {
             Ok(id) => id,
             Err(_) => {
                 let card = build_error_card("Invalid Guild ID.");

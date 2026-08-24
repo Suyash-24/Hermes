@@ -76,6 +76,15 @@ pub async fn run(
         q.text_channel = Some(cmd.channel_id());
     }
 
+    // Set idle voice channel status
+    crate::music::status::update_voice_status(
+        &ctx.http,
+        mc.voice_channel,
+        "Play a song with /play",
+        None,
+        None,
+    ).await;
+
     let card = build_success_card(&format!("{} Joined voice channel!", E::JOINED_VC));
     cmd.respond(ctx, &card).await?;
     Ok(())

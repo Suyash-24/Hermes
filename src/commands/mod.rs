@@ -92,7 +92,7 @@ fn all_command_names() -> &'static [&'static str] {
         "serveravatar", "serverbanner", "serverbio",
         "play", "pause", "resume", "skip", "stop", "join", "leave",
         "queue", "nowplaying", "volume", "seek", "loop", "shuffle",
-        "remove", "move", "clear", "lyrics", "autoplay",
+        "remove", "move", "clear", "lyrics", "autoplay", "247",
     ]
 }
 
@@ -263,6 +263,9 @@ fn build_commands() -> Vec<CreateCommand> {
 
         CreateCommand::new("autoplay")
             .description("Toggle autoplay mode — the bot plays related songs when the queue runs out"),
+
+        CreateCommand::new("247")
+            .description("Toggle 24/7 mode — bot stays in VC after queue ends (Premium only)"),
     ]
 }
 
@@ -356,6 +359,7 @@ pub async fn dispatch(
         "clear"       => clear::run(ctx, &ctx_cmd, state, args).await,
         "lyrics"      => lyrics::run(ctx, &ctx_cmd, state, args).await,
         "autoplay"    => autoplay::run(ctx, &ctx_cmd, state, args).await,
+        "247"         => twenty_four_seven::run(ctx, &ctx_cmd, state, args).await,
 
         name => Err(BotError::UnknownCommand(name.to_string())),
     }
