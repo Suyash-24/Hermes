@@ -6,6 +6,7 @@
 /// - `LoopMode` — loop behaviour enum
 /// - `MusicManager` — helper to look up queues from state
 pub mod events;
+pub mod autoplay;
 pub mod lavalink;
 pub mod status;
 pub mod queue;

@@ -100,22 +100,16 @@ pub fn track_end_event(
             // ── Autoplay: find a related song and continue ────────────────────
             if autoplay {
                 if let (Some(title), Some(author)) = (last_track_title, last_track_author) {
-                    // Build a "mix" search query: YouTube's "mix" algorithm picks related songs.
-                    // Searching for "song name artist mix" reliably returns related content.
-                    let search_query = format!("{} {} mix", title, author);
-                    info!(guild = %guild_id, query = %search_query, "Autoplay: searching for related track");
+                    let puter_token = state_lock.puter_auth_token.clone();
+                    let lastfm_key = state_lock.lastfm_api_key.clone();
 
-                    // Use a bot-user ID placeholder for autoplay tracks
-                    let autoplay_user_id = 0u64;
-                    let autoplay_user_name = "Autoplay".to_string();
-
-                    match crate::music::lavalink::search_autoplay(
-                        &client,
+                    match crate::music::autoplay::prefetch_autoplay(
+                        client.clone(),
                         guild_id,
-                        &search_query,
-                        &title,
-                        autoplay_user_id,
-                        &autoplay_user_name,
+                        title,
+                        author,
+                        puter_token,
+                        lastfm_key,
                     ).await {
                         Ok(track) => {
                             info!(guild = %guild_id, title = %track.title, "Autoplay: queuing related track");
@@ -321,14 +315,55 @@ pub fn track_start_event(
             state_lock.music_queues.get(&guild_id).map(|ref_val| ref_val.value().clone())
         };
         
-        let vc = if let Some(q) = queue_arc {
+        let vc = if let Some(q) = &queue_arc {
             q.lock().await.voice_channel
         } else {
             None
         };
         
         if let Some(vc_id) = vc {
-            crate::music::status::update_voice_status(&data.http, vc_id, &track_title, None, Some("??")).await;
+            crate::music::status::update_voice_status(&data.http, vc_id, &track_title, None, Some("▶️")).await;
+        }
+
+        // --- Autoplay Prefetch ---
+        let track_author = event.track.info.author.clone();
+        let (autoplay, queue_empty, puter_token, lastfm_key) = {
+            let state_lock = data.state.read().await;
+            let (ap, empty) = if let Some(queue) = &queue_arc {
+                let q_lock = queue.lock().await;
+                (q_lock.autoplay, q_lock.tracks.is_empty())
+            } else {
+                (false, false)
+            };
+            (ap, empty, state_lock.puter_auth_token.clone(), state_lock.lastfm_api_key.clone())
+        };
+
+        if autoplay && queue_empty {
+            let client_clone = client.clone();
+            let t_title = track_title.clone();
+            let t_author = track_author.clone();
+            let g_id = guild_id;
+            let q_arc_clone = queue_arc.clone();
+
+            tokio::spawn(async move {
+                if let Ok(prepared_track) = crate::music::autoplay::prefetch_autoplay(
+                    client_clone,
+                    g_id,
+                    t_title,
+                    t_author,
+                    puter_token,
+                    lastfm_key,
+                ).await {
+                    if let Some(q) = q_arc_clone {
+                        let mut q_lock = q.lock().await;
+                        // Only set if queue is still empty (user didn't manually queue a song while we fetched)
+                        if q_lock.tracks.is_empty() {
+                            tracing::info!(guild = %g_id, title = %prepared_track.title, "Autoplay: pre-fetched related track");
+                            q_lock.prepared_autoplay_track = Some(prepared_track);
+                        }
+                    }
+                }
+            });
         }
     })
 }

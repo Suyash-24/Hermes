@@ -40,6 +40,9 @@ pub struct AppState {
 
     /// Spotify API client (if configured)
     pub spotify: Option<Arc<crate::spotify::SpotifyClient>>,
+
+    pub puter_auth_token: Option<String>,
+    pub lastfm_api_key: Option<String>,
 }
 
 #[derive(Debug, Clone)]
@@ -71,6 +74,8 @@ impl AppState {
             sessions: DashMap::new(),
             music_queues: DashMap::new(),
             spotify: spotify_client,
+            puter_auth_token: std::env::var("PUTER_AUTH_TOKEN").ok(),
+            lastfm_api_key: std::env::var("LASTFM_API_KEY").ok(),
         }))
     }
 }

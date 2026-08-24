@@ -108,6 +108,8 @@ pub struct GuildQueue {
     pub voice_channel: Option<ChannelId>,
     /// Whether autoplay is enabled (play related songs when queue is empty).
     pub autoplay: bool,
+    /// Pre-fetched related track for autoplay
+    pub prepared_autoplay_track: Option<TrackInfo>,
 }
 
 impl GuildQueue {
@@ -121,11 +123,13 @@ impl GuildQueue {
     /// Add a track to the back of the queue.
     pub fn push(&mut self, track: TrackInfo) {
         self.tracks.push_back(track);
+        self.prepared_autoplay_track = None;
     }
 
     /// Add a track to play next (front of queue).
     pub fn push_front(&mut self, track: TrackInfo) {
         self.tracks.push_front(track);
+        self.prepared_autoplay_track = None;
     }
 
     /// Pop the next track from the queue.
@@ -146,7 +150,7 @@ impl GuildQueue {
                 next
             }
             LoopMode::Off => {
-                let next = self.tracks.pop_front();
+                let next = self.tracks.pop_front().or_else(|| self.prepared_autoplay_track.take());
                 self.current = next.clone();
                 next
             }
@@ -161,7 +165,7 @@ impl GuildQueue {
             self.tracks.pop_front();
         }
         self.loop_mode = LoopMode::Off; // Skip breaks loop-track mode
-        let next = self.tracks.pop_front();
+        let next = self.tracks.pop_front().or_else(|| self.prepared_autoplay_track.take());
         self.current = next.clone();
         next
     }
