@@ -304,6 +304,7 @@ pub fn track_start_event(
 ) -> futures::future::BoxFuture<'static, ()> {
     let event_guild_id = event.guild_id.0;
     let track_title = event.track.info.title.clone();
+    let track_author = event.track.info.author.clone();
     
     Box::pin(async move {
         let guild_id = GuildId::new(event_guild_id);
@@ -326,7 +327,6 @@ pub fn track_start_event(
         }
 
         // --- Autoplay Prefetch ---
-        let track_author = event.track.info.author.clone();
         let (autoplay, queue_empty, puter_token, lastfm_key) = {
             let state_lock = data.state.read().await;
             let (ap, empty) = if let Some(queue) = &queue_arc {
