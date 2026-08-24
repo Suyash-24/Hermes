@@ -71,7 +71,7 @@ pub async fn run(
     };
 
     let msg = if is_now_enabled {
-        "✅ 24/7 mode **Enabled**. The bot will stay in the voice channel after the queue ends."
+        format!("{} 24/7 mode **Enabled**. The bot will stay in the voice channel after the queue ends.", crate::components::emoji::E::OK)
     } else {
         // Edge case: if disabled and we are idle in VC, leave immediately.
         let queue_arc = {
@@ -99,7 +99,7 @@ pub async fn run(
                 q_lock.now_playing_msg = None;
             }
         }
-        "❌ 24/7 mode **Disabled**. The bot will leave the voice channel when stopped or queue ends."
+        format!("{} 24/7 mode **Disabled**. The bot will leave the voice channel when stopped or queue ends.", crate::components::emoji::E::ERROR)
     };
 
     let card = build_success_card(msg);

@@ -41,6 +41,13 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         q.voice_channel = None;
         q.text_channel = None;
         q.now_playing_msg = None;
+        
+        let state_guard = state.read().await;
+        {
+            let mut db_guard = state_guard.db.write().await;
+            db_guard.active_voice_channels.remove(&mc.guild_id.get());
+            db_guard.save();
+        }
     } else {
         let q = mc.queue.lock().await;
         if let Some(vc_id) = q.voice_channel {

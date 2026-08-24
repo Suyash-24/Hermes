@@ -52,6 +52,54 @@ impl EventHandler for Handler {
         if let Err(e) = crate::commands::register_global(&ctx).await {
             error!("Failed to register slash commands: {e}");
         }
+
+        // Auto-rejoin voice channels
+        let state = get_state(&ctx).await;
+        let active_channels = {
+            let state_guard = state.read().await;
+            let db_guard = state_guard.db.read().await;
+            db_guard.active_voice_channels.clone()
+        };
+
+        if !active_channels.is_empty() {
+            if let Some(manager) = songbird::get(&ctx).await {
+                for (guild_id, channel_id) in active_channels {
+                    let gid = serenity::model::id::GuildId::new(guild_id);
+                    let cid = serenity::model::id::ChannelId::new(channel_id);
+                    
+                    if manager.get(gid).is_none() {
+                        match manager.join_gateway(gid, cid).await {
+                            Ok((conn_info, _)) => {
+                                info!(guild = %guild_id, "Auto-rejoined VC");
+                                
+                                let state_guard = state.read().await;
+                                if let Some(queue_arc) = state_guard.music_queues.get(&gid) {
+                                    let mut q = queue_arc.value().lock().await;
+                                    q.voice_channel = Some(cid);
+                                }
+                                
+                                let lava_conn = lavalink_rs::model::player::ConnectionInfo {
+                                    endpoint: conn_info.endpoint,
+                                    token: conn_info.token,
+                                    session_id: conn_info.session_id,
+                                    channel_id: Some(cid.into()),
+                                };
+                                
+                                let data = ctx.data.read().await;
+                                if let Some(lavalink) = data.get::<LavalinkKey>() {
+                                    if let Err(e) = lavalink.create_player_context(gid, lava_conn).await {
+                                        error!("Failed to create player context on auto-rejoin: {}", e);
+                                    }
+                                }
+                            }
+                            Err(e) => {
+                                error!(guild = %guild_id, error = %e, "Failed to auto-rejoin VC");
+                            }
+                        }
+                    }
+                }
+            }
+        }
     }
 
     // ── Interactions (slash commands, buttons, selects, modals) ───────────────
@@ -244,7 +292,7 @@ impl EventHandler for Handler {
                     let bot_name = ctx.cache.current_user().name.clone();
                     let bot_avatar = ctx.cache.current_user().face();
                     
-                    let section_text = format!("**Hey there!** ✨\nHello! I'm **{}**, an all-in-one community bot.\n\n✨ **Prefix:** `{}`\n\n✨ You can also run commands by tagging me! e.g. `@{bot_name} play lo-fi`", bot_name, pfx);
+                    let section_text = format!("**Hey there!** {}\nHello! I'm **{}**, an all-in-one community bot.\n\n{} **Prefix:** `{}`\n\n{} You can also run commands by tagging me! e.g. `@{bot_name} play lo-fi`", crate::components::emoji::E::SPARK, bot_name, crate::components::emoji::E::SPARK, pfx, crate::components::emoji::E::SPARK);
                     let help_text = "Need help? Use the `help` command to see everything I can do!".to_string();
                     
                     let card = FadeResponse::new().container(None, |c| {

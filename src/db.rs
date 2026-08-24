@@ -25,6 +25,9 @@ pub struct Database {
     /// Guild ID -> Admin Bypass Enabled (default true)
     #[serde(default)]
     pub admin_bypass: HashMap<u64, bool>,
+    /// Guild ID -> Channel ID (stores active voice connections)
+    #[serde(default)]
+    pub active_voice_channels: HashMap<u64, u64>,
 }
 
 impl Database {

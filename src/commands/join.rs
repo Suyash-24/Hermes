@@ -76,6 +76,13 @@ pub async fn run(
         q.text_channel = Some(cmd.channel_id());
     }
 
+    let state_guard = state.read().await;
+    {
+        let mut db_guard = state_guard.db.write().await;
+        db_guard.active_voice_channels.insert(mc.guild_id.get(), mc.voice_channel.get());
+        db_guard.save();
+    }
+
     // Set idle voice channel status
     crate::music::status::update_voice_status(
         &ctx.http,

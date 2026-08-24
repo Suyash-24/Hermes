@@ -122,9 +122,9 @@ pub async fn run(
         Ok(response) => {
             if response.status().is_success() {
                 let msg = if avatar_payload.is_null() {
-                    "✅ Successfully reset the bot's server avatar!"
+                    format!("{} Successfully reset the bot's server avatar!", crate::components::emoji::E::OK)
                 } else {
-                    "✅ Successfully updated the bot's server avatar!"
+                    format!("{} Successfully updated the bot's server avatar!", crate::components::emoji::E::OK)
                 };
                 let card = build_success_card(msg);
                 cmd.respond(ctx, &card).await?;

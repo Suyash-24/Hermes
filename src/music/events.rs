@@ -211,6 +211,11 @@ pub fn track_end_event(
                                 q_lock.text_channel = None;
                                 q_lock.now_playing_msg = None;
                             }
+                            
+                            let state_guard = data_clone.state.read().await;
+                            let mut db_guard = state_guard.db.write().await;
+                            db_guard.active_voice_channels.remove(&gid.get());
+                            db_guard.save();
                         }
                     });
                 }

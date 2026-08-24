@@ -85,11 +85,11 @@ pub async fn run(
     }
 
     let msg = if is_remove {
-        format!("✅ <@{}> removed from the noprefix list.", target_id)
+        format!("{} <@{}> removed from the noprefix list.", crate::components::emoji::E::OK, target_id)
     } else if expires_at == 0 {
-        format!("✅ <@{}> added to the noprefix list for **lifetime**.", target_id)
+        format!("{} <@{}> added to the noprefix list for **lifetime**.", crate::components::emoji::E::OK, target_id)
     } else {
-        format!("✅ <@{}> added to the noprefix list until <t:{}:R>.", target_id, expires_at)
+        format!("{} <@{}> added to the noprefix list until <t:{}:R>.", crate::components::emoji::E::OK, target_id, expires_at)
     };
 
     let card = build_success_card(&msg);

@@ -52,6 +52,13 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
         }
     }
 
+    let state_guard = state.read().await;
+    {
+        let mut db_guard = state_guard.db.write().await;
+        db_guard.active_voice_channels.remove(&guild_id.get());
+        db_guard.save();
+    }
+
     let card = build_success_card(&format!("{} Disconnected from voice channel.", E::LEFT_VC));
     cmd.respond(ctx, &card).await?;
     Ok(())

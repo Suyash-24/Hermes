@@ -76,9 +76,9 @@ pub async fn run(
     }
 
     let msg = if is_reset {
-        "✅ Server prefix has been reset to the default.".to_string()
+        format!("{} Server prefix has been reset to the default.", crate::components::emoji::E::OK)
     } else {
-        format!("✅ Server prefix has been set to `{}`\n(The default prefix will also still work).", new_prefix)
+        format!("{} Server prefix has been set to `{}`\n(The default prefix will also still work).", crate::components::emoji::E::OK, new_prefix)
     };
 
     let card = build_success_card(&msg);

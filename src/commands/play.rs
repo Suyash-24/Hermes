@@ -87,6 +87,13 @@ pub async fn run(
         let mut q = mc.queue.lock().await;
         q.voice_channel = Some(mc.voice_channel);
         q.text_channel = Some(cmd.channel_id());
+        
+        let state_guard = state.read().await;
+        {
+            let mut db_guard = state_guard.db.write().await;
+            db_guard.active_voice_channels.insert(mc.guild_id.get(), mc.voice_channel.get());
+            db_guard.save();
+        }
     }
 
     // Resolve tracks.
