@@ -109,19 +109,21 @@ pub async fn run(
             match spotify.get_playlist_search_queries(&playlist_id, 100).await {
                 Ok(queries) => {
                     for q in queries {
-                        let search_str = format!("ytsearch:{}", q);
                         if let Ok(track) = lava::search_one(
                             &mc.lavalink,
                             mc.guild_id,
-                            &search_str,
+                            &q,
                             requested_by,
                             &requested_by_name,
                         ).await {
                             tracks.push(track);
                         }
                     }
-                    if !tracks.is_empty() {
-                        spotify_handled = true;
+                    spotify_handled = true;
+                    if tracks.is_empty() {
+                        let card = build_error_card("Could not find any tracks from the Spotify playlist on YouTube.");
+                        cmd.edit(ctx, &card).await?;
+                        return Ok(());
                     }
                 }
                 Err(e) => {
