@@ -95,9 +95,13 @@ pub async fn handle(
 
         // ── Skip ──────────────────────────────────────────────────────────────
         "music_skip" => {
-            let next = {
+            let (next, autoplay, last_title, last_author) = {
                 let mut q = queue_arc.lock().await;
-                q.skip(1)
+                let autoplay = q.autoplay;
+                let last_title = q.current.as_ref().map(|t| t.title.clone());
+                let last_author = q.current.as_ref().map(|t| t.author.clone());
+                let next = q.skip(1);
+                (next, autoplay, last_title, last_author)
             };
 
             if let Some(track) = next {
@@ -110,6 +114,44 @@ pub async fn handle(
 
                 let card = build_now_playing_card(&track, 0, loop_mode, shuffled, volume, queue_len, false);
                 edit_with_card(ctx, component, &card).await?;
+            } else if autoplay {
+                if let (Some(title), Some(author)) = (last_title, last_author) {
+                    let search_query = format!("{} {} mix", title, author);
+                    
+                    let loading_card = build_success_card("Searching for related track...");
+                    edit_with_card(ctx, component, &loading_card).await?;
+
+                    match crate::music::lavalink::search_autoplay(
+                        &lavalink,
+                        guild_id,
+                        &search_query,
+                        &title,
+                        0,
+                        "Autoplay",
+                    ).await {
+                        Ok(track) => {
+                            lava::play_track(&lavalink, guild_id, &track).await?;
+                            let (loop_mode, shuffled, volume, queue_len) = {
+                                let mut q = queue_arc.lock().await;
+                                q.current = Some(track.clone());
+                                (q.loop_mode, q.shuffle, q.volume, q.tracks.len())
+                            };
+                            let card = build_now_playing_card(&track, 0, loop_mode, shuffled, volume, queue_len, false);
+                            
+                            // Edit the interaction again with the actual card
+                            edit_with_card(ctx, component, &card).await?;
+                        }
+                        Err(_) => {
+                            lava::stop(&lavalink, guild_id).await?;
+                            let card = build_success_card("⏭ Skipped — queue ended (autoplay found no related tracks).");
+                            edit_with_card(ctx, component, &card).await?;
+                        }
+                    }
+                } else {
+                    lava::stop(&lavalink, guild_id).await?;
+                    let card = build_success_card("⏭ Skipped — queue ended.");
+                    edit_with_card(ctx, component, &card).await?;
+                }
             } else {
                 lava::stop(&lavalink, guild_id).await?;
                 queue_arc.lock().await.current = None;
