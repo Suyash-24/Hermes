@@ -36,6 +36,6 @@ pub async fn run(
         ))
     };
 
-    cmd.edit(ctx, &card).await?;
+    cmd.respond(ctx, &card).await?;
     Ok(())
 }

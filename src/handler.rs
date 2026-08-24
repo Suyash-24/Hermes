@@ -421,6 +421,7 @@ impl EventHandler for Handler {
                 "24/7" | "247" => crate::commands::twenty_four_seven::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "lyrics"      => crate::commands::lyrics::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "premium"     => crate::commands::premium::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
+                "autoplay"    => crate::commands::autoplay::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "serveravatar" => crate::commands::serveravatar::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "serverbanner" => crate::commands::serverbanner::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
                 "serverbio"   => crate::commands::serverbio::run(&ctx, &ctx_cmd, Arc::clone(&state), &args).await,
