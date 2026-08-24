@@ -106,6 +106,8 @@ pub struct GuildQueue {
     pub text_channel: Option<ChannelId>,
     /// The voice channel the bot is in.
     pub voice_channel: Option<ChannelId>,
+    /// Whether autoplay is enabled (play related songs when queue is empty).
+    pub autoplay: bool,
 }
 
 impl GuildQueue {

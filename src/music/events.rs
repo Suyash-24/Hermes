@@ -82,16 +82,89 @@ pub fn track_end_event(
             }
         } else {
             info!(guild = %guild_id, "Queue exhausted");
-            let (text_channel, voice_channel) = {
+
+            // Grab autoplay state + last track info + channels before releasing lock
+            let (autoplay, last_track_title, last_track_author, text_channel, voice_channel) = {
                 let queue = queue_arc.lock().await;
-                (queue.text_channel, queue.voice_channel)
+                let autoplay = queue.autoplay;
+                let last_title = queue.current.as_ref().map(|t| t.title.clone());
+                let last_author = queue.current.as_ref().map(|t| t.author.clone());
+                (autoplay, last_title, last_author, queue.text_channel, queue.voice_channel)
             };
-            
+
+            // ── Autoplay: find a related song and continue ────────────────────
+            if autoplay {
+                if let (Some(title), Some(author)) = (last_track_title, last_track_author) {
+                    // Build a "mix" search query: YouTube's "mix" algorithm picks related songs.
+                    // Searching for "song name artist mix" reliably returns related content.
+                    let search_query = format!("{} {} mix", title, author);
+                    info!(guild = %guild_id, query = %search_query, "Autoplay: searching for related track");
+
+                    // Use a bot-user ID placeholder for autoplay tracks
+                    let autoplay_user_id = 0u64;
+                    let autoplay_user_name = "Autoplay".to_string();
+
+                    match crate::music::lavalink::search_one(
+                        &client,
+                        guild_id,
+                        &search_query,
+                        autoplay_user_id,
+                        &autoplay_user_name,
+                    ).await {
+                        Ok(track) => {
+                            info!(guild = %guild_id, title = %track.title, "Autoplay: queuing related track");
+
+                            // Update voice status
+                            if let Some(vc_id) = voice_channel {
+                                crate::music::status::update_voice_status(
+                                    &data.http, vc_id, &track.title, None, Some("▶️")
+                                ).await;
+                            }
+
+                            // Set it as current and start playing
+                            {
+                                let mut q = queue_arc.lock().await;
+                                q.current = Some(track.clone());
+                            }
+
+                            if let Err(e) = crate::music::lavalink::play_track(&client, guild_id, &track).await {
+                                error!(guild = %guild_id, error = %e, "Autoplay: failed to play related track");
+                            } else {
+                                // Get queue state to build card
+                                let (loop_mode, shuffled, volume, queue_len, old_msg) = {
+                                    let q = queue_arc.lock().await;
+                                    (q.loop_mode, q.shuffle, q.volume, q.tracks.len(), q.now_playing_msg)
+                                };
+
+                                // Delete old now-playing message
+                                if let Some((chan_id, msg_id)) = old_msg {
+                                    let _ = data.http.delete_message(chan_id, msg_id, None).await;
+                                }
+
+                                // Send new now-playing card
+                                if let Some(chan_id) = text_channel {
+                                    use crate::commands::music_cards::build_now_playing_card;
+                                    let card = build_now_playing_card(&track, 0, loop_mode, shuffled, volume, queue_len, false);
+                                    if let Ok(msg) = crate::components::v2::respond_to_channel(&data.http, chan_id, &card).await {
+                                        let mut q = queue_arc.lock().await;
+                                        q.now_playing_msg = Some((chan_id, msg.id));
+                                    }
+                                }
+                            }
+                            return; // Do NOT fall through to queue-ended logic
+                        }
+                        Err(e) => {
+                            warn!(guild = %guild_id, error = %e, "Autoplay: failed to find related track, falling back");
+                        }
+                    }
+                }
+            }
+
+            // ── Normal queue-exhausted flow ───────────────────────────────────
             if let Some(vc_id) = voice_channel {
                 let is_24_7 = {
                     let app_state = data.state.read().await;
-                    let is_enabled = app_state.db.read().await.twenty_four_seven.contains(&guild_id.get());
-                    is_enabled
+                    app_state.db.read().await.twenty_four_seven.contains(&guild_id.get())
                 };
                 
                 if is_24_7 {
@@ -106,7 +179,6 @@ pub fn track_end_event(
                     tokio::spawn(async move {
                         tokio::time::sleep(std::time::Duration::from_secs(300)).await;
                         
-                        // Check if 24/7 is now ON
                         let is_24_7 = {
                             let app_state = data_clone.state.read().await;
                             let db_lock = app_state.db.read().await;
@@ -114,15 +186,13 @@ pub fn track_end_event(
                         };
                         if is_24_7 { return; }
                         
-                        // Check if queue is still empty
                         let queue_arc = {
                             let state = data_clone.state.read().await;
                             state.music_queues.get(&gid).map(|ref_val| ref_val.value().clone())
                         };
                         
                         let is_empty = if let Some(q) = &queue_arc {
-                            let q_lock = q.lock().await;
-                            q_lock.current.is_none()
+                            q.lock().await.current.is_none()
                         } else {
                             true
                         };
@@ -131,7 +201,6 @@ pub fn track_end_event(
                             let _ = crate::music::lavalink::destroy_player(&client_clone, gid).await;
                             let _ = data_clone.manager.remove(gid).await;
                             
-                            // Clear VC status and queue state
                             if let Some(q) = queue_arc {
                                 let mut q_lock = q.lock().await;
                                 if let Some(vc) = q_lock.voice_channel {

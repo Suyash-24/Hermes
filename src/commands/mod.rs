@@ -43,6 +43,7 @@ pub mod shuffle;
 pub mod skip;
 pub mod stop;
 pub mod volume;
+pub mod autoplay;
 
 // ── Existing utility commands ─────────────────────────────────────────────────
 pub mod avatar;
@@ -91,7 +92,7 @@ fn all_command_names() -> &'static [&'static str] {
         "serveravatar", "serverbanner", "serverbio",
         "play", "pause", "resume", "skip", "stop", "join", "leave",
         "queue", "nowplaying", "volume", "seek", "loop", "shuffle",
-        "remove", "move", "clear", "lyrics",
+        "remove", "move", "clear", "lyrics", "autoplay",
     ]
 }
 
@@ -259,6 +260,9 @@ fn build_commands() -> Vec<CreateCommand> {
                 )
                 .required(false),
             ),
+
+        CreateCommand::new("autoplay")
+            .description("Toggle autoplay mode — the bot plays related songs when the queue runs out"),
     ]
 }
 
@@ -351,6 +355,7 @@ pub async fn dispatch(
         "move"        => move_cmd::run(ctx, &ctx_cmd, state, args).await,
         "clear"       => clear::run(ctx, &ctx_cmd, state, args).await,
         "lyrics"      => lyrics::run(ctx, &ctx_cmd, state, args).await,
+        "autoplay"    => autoplay::run(ctx, &ctx_cmd, state, args).await,
 
         name => Err(BotError::UnknownCommand(name.to_string())),
     }
