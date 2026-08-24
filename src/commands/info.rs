@@ -96,8 +96,7 @@ async fn build_info_response(
             ))
             .separator(true)
             .action_row(|r| {
-                r.button_emoji("info_refresh", "Refresh", ButtonStyle::Secondary, E::REFRESH)
-                 .link("https://discord.com/invite/SmdUGNXjYv", "Support Server")
+                r.link("https://discord.com/invite/SmdUGNXjYv", "Support Server")
             })
         })
 }

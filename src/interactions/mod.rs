@@ -19,7 +19,6 @@
 ///   "music_prev"            — previous track (ack only)
 ///   "queue_prev_{page}"     — queue pagination prev
 ///   "queue_next_{page}"     — queue pagination next
-pub mod info;
 pub mod music;
 pub mod ping;
 pub mod avatar;
@@ -45,7 +44,6 @@ pub async fn dispatch(
 
     match id {
         "ping_refresh" => ping::handle_refresh(ctx, component, state).await,
-        "info_refresh" => info::handle_refresh(ctx, component, state).await,
 
         id if id.starts_with("avatar_") => {
             avatar::handle_toggle(ctx, component).await
