@@ -307,7 +307,7 @@ pub async fn dispatch(
         
         if !bypass {
             if has_whitelists && !is_whitelisted {
-                let msg_text = format!("⚠️ Commands are restricted to bound channels only.\n**Allowed Channels:** {}", bound_str);
+                let msg_text = format!("{} Commands are restricted to bound channels only.\n**Allowed Channels:** {}", crate::components::emoji::E::WARN, bound_str);
                 let msg = serenity::builder::CreateInteractionResponseMessage::new()
                     .content(msg_text)
                     .ephemeral(true);
@@ -316,7 +316,7 @@ pub async fn dispatch(
             }
             if is_blacklisted {
                 let msg = serenity::builder::CreateInteractionResponseMessage::new()
-                    .content("⚠️ Commands are disabled in this channel.")
+                    .content(format!("{} Commands are disabled in this channel.", crate::components::emoji::E::WARN))
                     .ephemeral(true);
                 let _ = cmd.create_response(&ctx.http, serenity::builder::CreateInteractionResponse::Message(msg)).await;
                 return Ok(()); // silently exit

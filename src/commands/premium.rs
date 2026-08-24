@@ -1,4 +1,5 @@
 use crate::commands::music_cards::{build_error_card, build_success_card};
+use crate::components::emoji::E;
 use crate::error::BotResult;
 use crate::state::AppState;
 use serenity::prelude::*;
@@ -133,7 +134,7 @@ pub async fn run(
             format!("<t:{}:R>", expiration)
         };
 
-        let card = build_success_card(&format!("🌟 Granted premium to Guild `{}` until {}", guild_id, time_str));
+        let card = build_success_card(&format!("{} Granted premium to Guild `{}` until {}", E::STAR, guild_id, time_str));
         cmd.respond(ctx, &card).await?;
         
     } else if action == "remove" {
@@ -155,7 +156,7 @@ pub async fn run(
             db.save();
         }
 
-        let card = build_success_card(&format!("💔 Removed premium from Guild `{}` (and disabled 24/7 if active).", guild_id));
+        let card = build_success_card(&format!("{} Removed premium from Guild `{}` (and disabled 24/7 if active).", E::ERROR, guild_id));
         cmd.respond(ctx, &card).await?;
     } else {
         let card = build_error_card("Invalid action. Use `add` or `remove`.");

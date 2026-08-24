@@ -1,6 +1,7 @@
 /// /resume — resume paused playback.
 use super::music_cards::{build_error_card, build_success_card};
 use super::music_helpers::resolve_music_context;
+use crate::components::emoji::E;
 
 use crate::error::BotResult;
 use crate::music::lavalink as lava;
@@ -21,7 +22,7 @@ pub async fn run(ctx: &Context, cmd: &crate::commands::context::CommandContext<'
 
     lava::resume(&mc.lavalink, mc.guild_id).await?;
 
-    let card = build_success_card("▶ Playback resumed.");
+    let card = build_success_card(&format!("{} Playback resumed.", E::PLAYING));
     cmd.respond(ctx, &card).await?;
     Ok(())
 }

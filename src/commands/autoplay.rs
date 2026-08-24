@@ -4,6 +4,7 @@
 /// song when the queue runs dry, based on the last track that was playing.
 use super::music_cards::build_success_card;
 use super::music_helpers::resolve_music_context;
+use crate::components::emoji::E;
 
 use crate::error::BotResult;
 use crate::state::AppState;
@@ -27,11 +28,11 @@ pub async fn run(
 
     let card = if new_state {
         build_success_card(&format!(
-            "🔀 **Autoplay Enabled**\nThe bot will automatically queue related songs when the queue runs out."
+            "{} **Autoplay Enabled**\nThe bot will automatically queue related songs when the queue runs out.", E::SHUFFLE
         ))
     } else {
         build_success_card(&format!(
-            "⏹️ **Autoplay Disabled**\nThe bot will stop after the current queue finishes."
+            "{} **Autoplay Disabled**\nThe bot will stop after the current queue finishes.", E::STOPPED
         ))
     };
 
