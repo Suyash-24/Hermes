@@ -145,11 +145,7 @@ impl GuildQueue {
             LoopMode::Queue => {
                 // Move current to back, then pop front.
                 if let Some(cur) = self.current.take() {
-                    if let Some(ref uri) = cur.uri {
-                        self.push_history(uri.clone());
-                    } else {
-                        self.push_history(cur.title.clone());
-                    }
+                    self.push_history(format!("{} by {}", cur.title, cur.author));
                     self.tracks.push_back(cur);
                 }
                 let next = self.tracks.pop_front();
@@ -158,11 +154,7 @@ impl GuildQueue {
             }
             LoopMode::Off => {
                 if let Some(cur) = &self.current {
-                    if let Some(ref uri) = cur.uri {
-                        self.push_history(uri.clone());
-                    } else {
-                        self.push_history(cur.title.clone());
-                    }
+                    self.push_history(format!("{} by {}", cur.title, cur.author));
                 }
                 let next = self.tracks.pop_front().or_else(|| self.prepared_autoplay_track.take());
                 self.current = next.clone();
@@ -184,21 +176,13 @@ impl GuildQueue {
         let count = count.max(1);
         
         if let Some(cur) = &self.current {
-            if let Some(ref uri) = cur.uri {
-                self.push_history(uri.clone());
-            } else {
-                self.push_history(cur.title.clone());
-            }
+            self.push_history(format!("{} by {}", cur.title, cur.author));
         }
         
         // Remove the ones we're skipping from the front.
         for _ in 0..count.saturating_sub(1) {
             if let Some(t) = self.tracks.pop_front() {
-                if let Some(ref uri) = t.uri {
-                    self.push_history(uri.clone());
-                } else {
-                    self.push_history(t.title.clone());
-                }
+                self.push_history(format!("{} by {}", t.title, t.author));
             }
         }
         self.loop_mode = LoopMode::Off; // Skip breaks loop-track mode

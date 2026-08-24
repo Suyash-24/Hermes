@@ -119,9 +119,9 @@ pub async fn search_autoplay(
         Some(TrackLoadData::Search(hits)) => {
             let mut selected = None;
             for hit in hits.into_iter() {
-                let hit_title = hit.info.title.to_lowercase();
-                // Check if hit_title is in history
-                if !history.iter().any(|h| h.eq_ignore_ascii_case(&hit_title)) {
+                let hit_str = format!("{} by {}", hit.info.title, hit.info.author);
+                // Check if hit_str is in history
+                if !history.iter().any(|h| h.eq_ignore_ascii_case(&hit_str)) {
                     selected = Some(hit);
                     break;
                 }
@@ -132,8 +132,8 @@ pub async fn search_autoplay(
         Some(TrackLoadData::Playlist(pl)) => {
             let mut selected = None;
             for hit in pl.tracks.into_iter() {
-                let hit_title = hit.info.title.to_lowercase();
-                if !history.iter().any(|h| h.eq_ignore_ascii_case(&hit_title)) {
+                let hit_str = format!("{} by {}", hit.info.title, hit.info.author);
+                if !history.iter().any(|h| h.eq_ignore_ascii_case(&hit_str)) {
                     selected = Some(hit);
                     break;
                 }
