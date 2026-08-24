@@ -13,7 +13,7 @@ level = "info"
 pretty = true
 
 [lavalink]
-host = "54.159.193.249"
+host = "34.201.73.132"
 port = 3333
 password = "Ronlly"
 https = false
