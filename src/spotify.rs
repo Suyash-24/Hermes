@@ -17,6 +17,7 @@ struct SpotifyPlaylistTracksResponse {
 #[derive(Debug, Deserialize)]
 struct SpotifyPlaylistItem {
     track: Option<SpotifyTrack>,
+    item: Option<SpotifyTrack>,
 }
 
 #[derive(Debug, Deserialize)]
@@ -107,7 +108,7 @@ impl SpotifyClient {
 
         loop {
             let url = format!(
-                "https://api.spotify.com/v1/playlists/{playlist_id}/tracks?limit={limit}&offset={offset}"
+                "https://api.spotify.com/v1/playlists/{playlist_id}/items?limit={limit}&offset={offset}"
             );
 
             let res = self
@@ -130,11 +131,12 @@ impl SpotifyClient {
 
             let batch_len = resp.items.len();
 
-            for item in resp.items {
+            for playlist_item in resp.items {
                 if queries.len() >= max_tracks {
                     break;
                 }
-                if let Some(track) = item.track {
+                let track_opt = playlist_item.item.or(playlist_item.track);
+                if let Some(track) = track_opt {
                     let artist = track
                         .artists
                         .first()
