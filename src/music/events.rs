@@ -19,6 +19,11 @@ pub fn track_end_event(
 ) -> futures::future::BoxFuture<'static, ()> {
     let reason = format!("{:?}", event.reason);
     let event_guild_id = event.guild_id.0;
+    
+    // Extract info here to avoid capturing `event` reference in `async move`
+    let event_track_title = event.track.info.title.clone();
+    let event_track_author = event.track.info.author.clone();
+
     Box::pin(async move {
         let guild_id = GuildId::new(event_guild_id);
 
@@ -87,8 +92,8 @@ pub fn track_end_event(
             let (autoplay, last_track_title, last_track_author, text_channel, voice_channel) = {
                 let queue = queue_arc.lock().await;
                 let autoplay = queue.autoplay;
-                let last_title = event.track.info.title.clone();
-                let last_author = event.track.info.author.clone();
+                let last_title = event_track_title.clone();
+                let last_author = event_track_author.clone();
                 (autoplay, Some(last_title), Some(last_author), queue.text_channel, queue.voice_channel)
             };
 
