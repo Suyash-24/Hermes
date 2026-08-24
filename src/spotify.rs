@@ -108,7 +108,7 @@ impl SpotifyClient {
 
         loop {
             let url = format!(
-                "https://api.spotify.com/v1/playlists/{playlist_id}/items?limit={limit}&offset={offset}"
+                "https://api.spotify.com/v1/playlists/{playlist_id}/tracks?limit={limit}&offset={offset}"
             );
 
             let res = self
