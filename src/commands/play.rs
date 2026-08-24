@@ -2,7 +2,7 @@
 ///
 /// If the bot is not in a voice channel, it joins the invoker's VC first.
 /// Adds to queue if something is already playing.
-use super::music_cards::{build_error_card, build_now_playing_card, build_playlist_queued_card, build_queued_card, build_success_card};
+use super::music_cards::{build_error_card, build_now_playing_card, build_playlist_queued_card, build_queued_card};
 use super::music_helpers::resolve_music_context;
 
 use crate::error::BotResult;
@@ -93,7 +93,7 @@ pub async fn run(
     let requested_by = cmd.user_id().get();
     let requested_by_name = cmd.user_name();
 
-    let mut tracks = match lava::search_all(
+    let tracks = match lava::search_all(
         &mc.lavalink,
         mc.guild_id,
         &query,

@@ -42,7 +42,7 @@ impl EventHandler for Handler {
 
         // Set the custom status
         ctx.set_presence(
-            Some(serenity::gateway::ActivityData::streaming("384kbps Opus Audio", "https://twitch.tv/discord")),
+            Some(serenity::gateway::ActivityData::streaming("384kbps Opus Audio", "https://twitch.tv/discord").unwrap()),
             serenity::model::user::OnlineStatus::Online,
         );
 
