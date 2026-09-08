@@ -95,6 +95,44 @@ function table(source: Record<string, unknown>, key: string): Record<string, unk
     : {};
 }
 
+function loadDotEnv() {
+  const candidates = [
+    resolve(process.cwd(), '.env'),
+    resolve(process.cwd(), '..', '.env'),
+    resolve(__dirname, '..', '.env'),
+    resolve(__dirname, '..', '..', '.env'),
+  ];
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      try {
+        const content = readFileSync(candidate, 'utf8');
+        for (const line of content.split(/\r?\n/)) {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith('#')) continue;
+          const eqIdx = trimmed.indexOf('=');
+          if (eqIdx !== -1) {
+            const key = trimmed.slice(0, eqIdx).trim();
+            let val = trimmed.slice(eqIdx + 1).trim();
+            if (
+              (val.startsWith('"') && val.endsWith('"')) ||
+              (val.startsWith("'") && val.endsWith("'"))
+            ) {
+              val = val.slice(1, -1);
+            }
+            if (!process.env[key] && val.length > 0) {
+              process.env[key] = val;
+            }
+          }
+        }
+        break;
+      } catch {
+        // ignore read error
+      }
+    }
+  }
+}
+
 function env(name: string): string | undefined {
   const value = process.env[name];
   return value && value.length > 0 ? value : undefined;
@@ -104,7 +142,21 @@ function env(name: string): string | undefined {
 
 /** Absolute path of the TOML config, overridable with `CONFIG_PATH`. */
 export function configPath(): string {
-  return resolve(env('CONFIG_PATH') ?? join(process.cwd(), 'config', 'default.toml'));
+  if (env('CONFIG_PATH')) {
+    return resolve(env('CONFIG_PATH')!);
+  }
+  const candidates = [
+    join(process.cwd(), 'config', 'default.toml'),
+    join(process.cwd(), '..', 'config', 'default.toml'),
+    resolve(__dirname, '..', 'config', 'default.toml'),
+    resolve(__dirname, '..', '..', 'config', 'default.toml'),
+  ];
+  for (const candidate of candidates) {
+    if (existsSync(candidate)) {
+      return resolve(candidate);
+    }
+  }
+  return resolve(join(process.cwd(), 'config', 'default.toml'));
 }
 
 /**
@@ -112,6 +164,8 @@ export function configPath(): string {
  * cannot do anything useful without it, so failing loudly at boot is correct.
  */
 export function loadConfig(): Config {
+  loadDotEnv();
+
   const path = configPath();
   let raw: Record<string, unknown> = {};
 
