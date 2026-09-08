@@ -15,6 +15,9 @@ export interface LoggingOptions {
   pretty: boolean;
 }
 
+const terracotta = (s: string) => `\x1b[38;2;217;119;87m${s}\x1b[0m`;
+const peach = (s: string) => `\x1b[38;2;240;150;120m${s}\x1b[0m`;
+
 function safeStringify(value: unknown): string {
   if (typeof value === 'string') return value;
   if (value instanceof Error) return value.stack ?? `${value.name}: ${value.message}`;
@@ -25,6 +28,23 @@ function safeStringify(value: unknown): string {
   }
 }
 
+/** Print iconic Claude Code aesthetic startup banner */
+export function printClaudeBanner(botName: string = 'Hermes'): void {
+  console.log('');
+  console.log(terracotta(' ╭───────────────────────────────╮'));
+  console.log(terracotta(` │ ✳ Welcome to ${botName.padEnd(16, ' ')} │`));
+  console.log(terracotta(' ╰───────────────────────────────╯'));
+  console.log(peach('  ██╗  ██╗███████╗██████╗ ███╗   ███╗███████╗███████╗'));
+  console.log(peach('  ██║  ██║██╔════╝██╔══██╗████╗ ████║██╔════╝██╔════╝'));
+  console.log(peach('  ███████║█████╗  ██████╔╝██╔████╔██║█████╗  ███████╗'));
+  console.log(peach('  ██╔══██║██╔══╝  ██╔══██╗██║╚██╔╝██║██╔══╝  ╚════██║'));
+  console.log(peach('  ██║  ██║███████╗██║  ██║██║ ╚═╝ ██║███████╗███████║'));
+  console.log(peach('  ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝╚═╝     ╚═╝╚══════╝╚══════╝'));
+  console.log('');
+  console.log(` ${pc.dim(`${botName} • Node.js ${process.version} • Seyfert Engine • Lavalink v4`)}`);
+  console.log('');
+}
+
 /** Apply the configured level and formatter. Call once, at boot. */
 export function initLogging({ level, pretty }: LoggingOptions): void {
   const resolved = LEVELS[level] ?? LogLevels.Info;
@@ -32,39 +52,41 @@ export function initLogging({ level, pretty }: LoggingOptions): void {
   log.level = resolved;
 
   if (pretty) {
-    // Beautiful, Claude-code like aesthetic logging
+    // Beautiful Claude Code aesthetic logger
     Logger.customize((self, logLevel, args) => {
       const time = pc.dim(new Date().toLocaleTimeString([], { hour12: false }));
       
-      let levelBadge = '';
+      let badge = '';
       let msgColor = (s: string) => s;
 
       switch (logLevel) {
         case LogLevels.Debug:
-          levelBadge = pc.gray('▶ DBG');
-          msgColor = pc.gray;
+          badge = pc.dim('dbg ');
+          msgColor = pc.dim;
           break;
         case LogLevels.Info:
-          levelBadge = pc.blue('ℹ INF');
+          badge = terracotta('info');
           break;
         case LogLevels.Warn:
-          levelBadge = pc.yellow('⚠ WRN');
+          badge = pc.yellow('warn');
           msgColor = pc.yellow;
           break;
         case LogLevels.Error:
-          levelBadge = pc.red('✖ ERR');
+          badge = pc.red('err ');
           msgColor = pc.red;
           break;
         case LogLevels.Fatal:
-          levelBadge = pc.bgRed(pc.white(' ✖ FTL '));
+          badge = pc.bgRed(pc.white(' fatal '));
           msgColor = pc.red;
           break;
       }
 
-      const namePrefix = self.name ? pc.cyan(`${self.name}`) : '';
+      const rawName = self.name ?? 'Fade';
+      const cleanName = rawName.replace(/^Fade:/, '');
+      const nameBadge = pc.dim(`[${cleanName}]`);
       const msg = msgColor(args.map(safeStringify).join(' '));
 
-      return [`${time} ${levelBadge} ${namePrefix} ${pc.dim('│')} ${msg}`];
+      return [`${time}  ${badge}  ${nameBadge} ${msg}`];
     });
   } else {
     // JSON logging

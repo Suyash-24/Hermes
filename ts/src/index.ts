@@ -3,7 +3,7 @@ import { loadConfig } from './config';
 import { initAppState, appState } from './state';
 import { initLavalink } from './music/manager';
 import { setClient } from './client';
-import { logger } from './logging';
+import { initLogging, logger, printClaudeBanner } from './logging';
 
 import { errorCard } from './cards/common';
 
@@ -57,11 +57,13 @@ try {
 
 async function boot() {
   const config = loadConfig();
-  log.info(`Booting Fade as ${config.bot.name}...`);
+  initLogging(config.logging);
+  printClaudeBanner(config.bot.name);
 
   initAppState(config);
 
   const client = new Client({
+    allowedMentions: { replied_user: false },
     commands: {
       defaults: {
         onOptionsError(context, metadata) {

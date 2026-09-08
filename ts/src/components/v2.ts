@@ -272,8 +272,12 @@ export class FadeResponse {
   }
 
   /** Body for `ctx.write` / `ctx.editOrReply` / `channel.messages.write`. */
-  toMessage(): { flags: number; components: FadeComponent[] } {
-    return { flags: this.flags, components: this.toComponents() };
+  toMessage(): { flags: number; components: FadeComponent[]; allowed_mentions: { replied_user: boolean; parse: [] } } {
+    return {
+      flags: this.flags,
+      components: this.toComponents(),
+      allowed_mentions: { replied_user: false, parse: [] },
+    };
   }
 
   /** Raw JSON, for the few places that hit the Discord REST API directly. */
