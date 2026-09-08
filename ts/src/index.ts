@@ -9,6 +9,52 @@ import { errorCard } from './cards/common';
 
 const log = logger('boot');
 
+// Patch Seyfert's HandleCommand to support natural positional arguments for Discord prefix commands
+try {
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const { HandleCommand } = require('seyfert/lib/commands/handle');
+  if (HandleCommand && HandleCommand.prototype) {
+    HandleCommand.prototype.argsParser = function (content: string, command: any): Record<string, string> {
+      const args: Record<string, string> = {};
+      if (!content || !content.trim()) return args;
+
+      // 1. Support CLI-style flags if user typed -flag value
+      const flagMatches = content.match(/-(.*?)(?=\s-|$)/gs);
+      if (flagMatches && flagMatches.length > 0) {
+        for (const i of flagMatches) {
+          const parts = i.slice(1).trim().split(/\s+/);
+          const key = parts[0];
+          const val = parts.slice(1).join(' ');
+          if (key) args[key] = val;
+        }
+        return args;
+      }
+
+      // 2. Positional argument parsing matching command options
+      const options = command?.options ?? [];
+      if (!options || options.length === 0) return args;
+
+      if (options.length === 1) {
+        args[options[0].name] = content.trim();
+        return args;
+      }
+
+      const tokens = content.trim().split(/\s+/);
+      for (let i = 0; i < options.length; i++) {
+        if (i >= tokens.length) break;
+        if (i === options.length - 1) {
+          args[options[i].name] = tokens.slice(i).join(' ');
+        } else {
+          args[options[i].name] = tokens[i];
+        }
+      }
+      return args;
+    };
+  }
+} catch (e) {
+  log.warn('Failed to configure custom argsParser:', e);
+}
+
 async function boot() {
   const config = loadConfig();
   log.info(`Booting Fade as ${config.bot.name}...`);
