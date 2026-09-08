@@ -34,11 +34,11 @@ export default createEvent({
       const response = new FadeResponse().container(undefined, c => c
         .section(s => s
           .text(`## ${E.AFK_REMOVE} Welcome back!`)
-          .text(`*The hero returns. The void has released you.*`)
+          .text(`*The hero returns.*\n*The void has released you.*`)
           .thumbnail(avatar)
         )
         .separator(true)
-        .text(`> ⏱️ **Away for** • \`${durationStr}\`\n> 💬 **Reason was** • **${afkData.reason}**`)
+        .text(`> ${E.SHINE} **Away for** • \`${durationStr}\`\n> ${E.SHINE} **Reason was** • **${afkData.reason}**`)
       );
 
       try {
@@ -85,11 +85,13 @@ export default createEvent({
         const response = new FadeResponse().container(undefined, c => c
           .section(s => s
             .text(`## ${E.IS_AFK} User is AFK`)
-            .text(`*<@${id}> is currently away and might not respond immediately.*`)
-            .thumbnail(avatar)
+            .text(`<@${id}> *is currently away*\n*might not respond immediately.*`)
           )
           .separator(true)
-          .text(`> 💬 **Reason** • **${afkData.reason}**\n> ⏱️ **Went AFK** • <t:${afkData.timestamp}:R>`)
+          .section(s => s
+            .text(`> ${E.SHINE} **Reason** • **${afkData.reason}**\n> ${E.SHINE} **Went AFK** • <t:${afkData.timestamp}:R>`)
+            .thumbnail(avatar)
+          )
         );
 
         try {

@@ -34,11 +34,11 @@ export default class AfkCommand extends Command {
     const response = new FadeResponse().container(undefined, c => c
       .section(s => s
         .text(`## ${E.AFK_SET} AFK Set`)
-        .text(`*Your status has been updated. I'll notify anyone who mentions you.*`)
+        .text(`*Your status has been updated.*\n*I'll notify anyone who mentions you.*`)
         .thumbnail(avatar)
       )
       .separator(true)
-      .text(`> 💬 **Reason** • **${reason}**\n> 🕒 **Marked at** • <t:${timestamp}:t> (<t:${timestamp}:R>)`)
+      .text(`> ${E.SHINE} **Reason** • **${reason}**\n> ${E.SHINE} **Marked at** • <t:${timestamp}:t> (<t:${timestamp}:R>)`)
     );
 
     await ctx.editOrReply(response.toMessage());
