@@ -1,5 +1,5 @@
 import { Declare, Command, type CommandContext, Options, createStringOption } from 'seyfert';
-import { lavalink, searchNode } from '../music/manager';
+import { lavalink, lavalinkReady, searchNode } from '../music/manager';
 import { searchForPlay } from '../music/search';
 import { setPlayerData } from '../music/playerData';
 import { nowPlayingCard, playlistQueuedCard, queuedCard } from '../cards/music';
@@ -45,6 +45,11 @@ export default class PlayCommand extends Command {
       avatarUrl: ctx.author.avatarURL() ?? ctx.author.defaultAvatarURL(),
     };
 
+    if (!lavalinkReady()) {
+      await ctx.editOrReply(errorCard('The music player is currently connecting to Lavalink. Please try again in a moment.').toMessage());
+      return;
+    }
+
     let player = lavalink().getPlayer(ctx.guildId);
     
     if (!player) {
@@ -57,7 +62,13 @@ export default class PlayCommand extends Command {
       });
     }
 
-    if (!player.connected) await player.connect();
+    // Only connect if we aren't already in or connecting to this voice channel
+    if (!player.voiceChannelId || player.voiceChannelId !== voiceState.channelId) {
+      player.voiceChannelId = voiceState.channelId;
+      await player.connect();
+    } else if (!player.connected && !player.voice?.sessionId) {
+      await player.connect();
+    }
 
     try {
       const result = await searchForPlay(player, query, requester);
@@ -69,7 +80,13 @@ export default class PlayCommand extends Command {
         if (!isPlaying) {
           await player.play();
           const card = nowPlayingCard(player, player.queue.current!);
-          await ctx.editOrReply(card.toMessage());
+          const reply: any = await ctx.editOrReply(card.toMessage());
+          if (reply && typeof reply === 'object' && 'id' in reply && player.queue.current) {
+            setPlayerData(player, {
+              nowPlayingMsg: { channelId: ctx.channelId, messageId: reply.id },
+              nowPlayingTrackId: player.queue.current.info.identifier,
+            });
+          }
         } else {
           const card = playlistQueuedCard(result.tracks, result.playlistName);
           await ctx.editOrReply(card.toMessage());
@@ -79,7 +96,13 @@ export default class PlayCommand extends Command {
         if (!isPlaying) {
           await player.play();
           const card = nowPlayingCard(player, player.queue.current!);
-          await ctx.editOrReply(card.toMessage());
+          const reply: any = await ctx.editOrReply(card.toMessage());
+          if (reply && typeof reply === 'object' && 'id' in reply && player.queue.current) {
+            setPlayerData(player, {
+              nowPlayingMsg: { channelId: ctx.channelId, messageId: reply.id },
+              nowPlayingTrackId: player.queue.current.info.identifier,
+            });
+          }
         } else {
           const position = player.queue.tracks.length;
           const card = queuedCard(track, position);

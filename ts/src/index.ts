@@ -1,13 +1,22 @@
 import { Client } from 'seyfert';
 import { loadConfig } from './config';
 import { initAppState, appState } from './state';
-import { initLavalink } from './music/manager';
+import { initLavalink, lavalink } from './music/manager';
 import { setClient } from './client';
 import { initLogging, logger, printClaudeBanner } from './logging';
 
 import { errorCard } from './cards/common';
 
 const log = logger('boot');
+
+// Global unhandled error guards so temporary network drops or Lavalink hiccups never kill the bot process
+process.on('unhandledRejection', (reason: any) => {
+  log.error('Unhandled Rejection:', reason?.stack || reason?.message || reason);
+});
+
+process.on('uncaughtException', (err: Error) => {
+  log.error('Uncaught Exception:', err.stack || err.message);
+});
 
 // Patch Seyfert's HandleCommand to support natural positional arguments for Discord prefix commands
 try {
@@ -64,6 +73,11 @@ async function boot() {
 
   const client = new Client({
     allowedMentions: { replied_user: false },
+    handlePayload: async (_shardId, packet) => {
+      try {
+        void lavalink().sendRawData(packet as any).catch(() => {});
+      } catch {}
+    },
     commands: {
       defaults: {
         onOptionsError(context, metadata) {

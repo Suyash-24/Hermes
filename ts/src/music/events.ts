@@ -219,8 +219,8 @@ export function registerMusicEvents(manager: LavalinkManager): void {
   });
 
   manager.on('trackEnd', (player, track, payload) => {
-    // The library advances the queue itself — this is a log line, nothing more.
-    log.debug(`Track ended (${payload.reason}) ${tag(player, track)}`);
+    // The library advances the queue itself — log the reason for transparency
+    log.info(`Track ended (${payload.reason}) ${tag(player, track)}`);
   });
 
   manager.on('queueEnd', (player, track) => {

@@ -4,6 +4,8 @@ import { lavalink } from '../music/manager';
 export default createEvent({
   data: { name: 'raw' },
   run(packet: any) {
-    lavalink().sendRawData(packet);
+    try {
+      void lavalink().sendRawData(packet).catch(() => {});
+    } catch {}
   }
 });
