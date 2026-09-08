@@ -14,9 +14,8 @@ export default class PingCommand extends Command {
     
     const response = new FadeResponse()
       .container(undefined, c => c
-        .section(s => s
-          .text(stat(E.LATENCY, 'Latency', `${latency} ms`))
-        )
+        .text(`## ${E.BRAND} Pong!`)
+        .text(stat(E.LATENCY, 'Latency', `${latency} ms`))
         .actionRow(r => r
           .buttonEmoji('ping_refresh', 'Refresh', ButtonStyle.Secondary, E.REFRESH)
         )

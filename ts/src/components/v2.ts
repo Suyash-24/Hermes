@@ -79,6 +79,14 @@ export class SectionBuilder {
     return this;
   }
 
+  hasAccessory(): boolean {
+    return this.accessory !== undefined;
+  }
+
+  getTexts(): TextDisplay[] {
+    return this.texts;
+  }
+
   build(): Section {
     const section = new Section().addComponents(this.texts);
     if (this.accessory) section.setAccessory(this.accessory);
@@ -179,7 +187,13 @@ export class ContainerBuilder {
   section(build: Build<SectionBuilder>): this {
     const builder = new SectionBuilder();
     build(builder);
-    this.components.push(builder.build());
+    if (!builder.hasAccessory()) {
+      for (const t of builder.getTexts()) {
+        this.components.push(t);
+      }
+    } else {
+      this.components.push(builder.build());
+    }
     return this;
   }
 
