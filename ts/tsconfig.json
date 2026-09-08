@@ -4,8 +4,7 @@
     "lib": ["ES2023"],
     "types": ["node"],
     "module": "commonjs",
-    "moduleResolution": "node",
-    "ignoreDeprecations": "6.0",
+    "moduleResolution": "bundler",
 
     "rootDir": "src",
     "outDir": "dist",
