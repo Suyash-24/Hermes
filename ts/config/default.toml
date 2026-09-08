@@ -1,0 +1,26 @@
+# Fade — runtime configuration.
+#
+# Every value here can be overridden by an environment variable (see src/config.ts).
+# DISCORD_TOKEN is NOT read from this file — it must come from the environment.
+#
+# Owner / snowflake IDs may be written as bare integers or quoted strings; both are
+# parsed losslessly. Quoted strings are preferred.
+
+[bot]
+name = "Hermes"
+prefix = "^^"
+owners = ["1319707981377699920", "1425797581962874910"]
+
+[gateway]
+shards = 1
+reconnect_timeout = 30
+
+[logging]
+level = "info"
+pretty = true
+
+[lavalink]
+host = "34.201.73.132"
+port = 3333
+password = "Ronlly"
+https = false
