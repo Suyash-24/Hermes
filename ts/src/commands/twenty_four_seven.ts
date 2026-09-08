@@ -4,8 +4,9 @@ import { successCard, errorCard } from '../cards/common';
 import { E } from '../components/emoji';
 
 @Declare({
-  name: '24/7',
+  name: '24-7',
   description: 'Toggle 24/7 mode. When enabled, the bot will not leave when idle.',
+  aliases: ['247', '24/7'],
 })
 export default class TwentyFourSevenCommand extends Command {
   override async run(ctx: CommandContext) {
