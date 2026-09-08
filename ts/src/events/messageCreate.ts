@@ -3,11 +3,20 @@ import { appState } from '../state';
 import { Colour, E, header } from '../components/emoji';
 import { FadeResponse } from '../components/v2';
 import { nowSecs } from '../db';
+import { logger } from '../logging';
+
+const msgLog = logger('msg');
 
 export default createEvent({
   data: { name: 'messageCreate', once: false },
   async run(message, client) {
     if (message.author.bot) return;
+
+    if (!message.content) {
+      msgLog.warn(`Message from ${message.author.username} has EMPTY content. Check if "Message Content Intent" is enabled in Discord Developer Portal!`);
+    } else {
+      msgLog.debug(`[#${message.channelId}] ${message.author.username}: "${message.content}"`);
+    }
 
     const state = appState();
     const authorId = message.author.id;
