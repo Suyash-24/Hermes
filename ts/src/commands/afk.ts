@@ -1,6 +1,6 @@
 import { Declare, Command, type CommandContext, Options, createStringOption } from 'seyfert';
 import { appState } from '../state';
-import { Colour, E, header } from '../components/emoji';
+import { E } from '../components/emoji';
 import { FadeResponse } from '../components/v2';
 import { nowSecs } from '../db';
 
@@ -28,8 +28,17 @@ export default class AfkCommand extends Command {
     });
     state.db.save();
 
-    const response = new FadeResponse().container(Colour.FADE, c => 
-      c.text(header(E.AFK_SET, `You are now AFK: **${reason}**`))
+    const avatar = ctx.author.avatarURL() ?? ctx.author.defaultAvatarURL();
+    const timestamp = nowSecs();
+
+    const response = new FadeResponse().container(undefined, c => c
+      .section(s => s
+        .text(`## ${E.AFK_SET} AFK Set`)
+        .text(`*Your status has been updated. I'll notify anyone who mentions you.*`)
+        .thumbnail(avatar)
+      )
+      .separator(true)
+      .text(`> 💬 **Reason** • **${reason}**\n> 🕒 **Marked at** • <t:${timestamp}:t> (<t:${timestamp}:R>)`)
     );
 
     await ctx.editOrReply(response.toMessage());

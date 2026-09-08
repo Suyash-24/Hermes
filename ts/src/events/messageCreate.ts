@@ -1,6 +1,6 @@
 import { createEvent } from 'seyfert';
 import { appState } from '../state';
-import { Colour, E, header } from '../components/emoji';
+import { E } from '../components/emoji';
 import { FadeResponse } from '../components/v2';
 import { nowSecs } from '../db';
 import { logger } from '../logging';
@@ -29,9 +29,16 @@ export default createEvent({
 
       const timeAgo = nowSecs() - afkData.timestamp;
       const durationStr = formatDuration(timeAgo);
+      const avatar = message.author.avatarURL() ?? message.author.defaultAvatarURL();
 
-      const response = new FadeResponse().container(Colour.FADE, c => 
-        c.text(header(E.AFK_REMOVE, `Welcome back <@${authorId}>! You were AFK for ${durationStr}.`))
+      const response = new FadeResponse().container(undefined, c => c
+        .section(s => s
+          .text(`## ${E.AFK_REMOVE} Welcome back!`)
+          .text(`*The hero returns. The void has released you.*`)
+          .thumbnail(avatar)
+        )
+        .separator(true)
+        .text(`> ⏱️ **Away for** • \`${durationStr}\`\n> 💬 **Reason was** • **${afkData.reason}**`)
       );
 
       try {
@@ -42,26 +49,47 @@ export default createEvent({
     }
 
     // Check if any mentioned user is AFK
-    // Seyfert message.mentions.users might be an array or collection depending on version, let's parse safely.
-    const mentions = message.mentions;
-    // According to discord api, we can just extract from the content or use message.mentions if populated.
-    // Seyfert `message.mentions` gives an array of User objects typically, or we can parse `message.content` for `<@ID>`.
     const mentionedIds = new Set<string>();
     
-    // Fallback regex matching for mentions just in case message.mentions isn't populated
+    // Check message.mentions.users if available
+    if (Array.isArray(message.mentions?.users)) {
+      for (const user of message.mentions.users) {
+        if (user.id && user.id !== authorId) mentionedIds.add(user.id);
+      }
+    }
+
+    // Fallback regex matching for mentions in content
     const mentionRegex = /<@!?(\d+)>/g;
     let match;
     while ((match = mentionRegex.exec(message.content)) !== null) {
-      if (match[1]) mentionedIds.add(match[1]);
+      if (match[1] && match[1] !== authorId) mentionedIds.add(match[1]);
     }
 
     for (const id of mentionedIds) {
       if (state.db.afkUsers.has(id)) {
         const afkData = state.db.afkUsers.get(id)!;
         
-        const response = new FadeResponse().container(Colour.FADE, c => 
-          c.text(header(E.IS_AFK, `<@${id}> is currently AFK: **${afkData.reason}**`))
-           .text(`Went AFK <t:${afkData.timestamp}:R>`)
+        let avatar = 'https://cdn.discordapp.com/embed/avatars/0.png';
+        const inMentions = message.mentions?.users?.find(u => u.id === id);
+        if (inMentions && 'avatarURL' in inMentions && typeof inMentions.avatarURL === 'function') {
+          avatar = inMentions.avatarURL() ?? (inMentions as any).defaultAvatarURL?.() ?? avatar;
+        } else {
+          try {
+            const user = await client.users.fetch(id);
+            if (user) avatar = user.avatarURL() ?? user.defaultAvatarURL();
+          } catch {
+            // fallback default
+          }
+        }
+
+        const response = new FadeResponse().container(undefined, c => c
+          .section(s => s
+            .text(`## ${E.IS_AFK} User is AFK`)
+            .text(`*<@${id}> is currently away and might not respond immediately.*`)
+            .thumbnail(avatar)
+          )
+          .separator(true)
+          .text(`> 💬 **Reason** • **${afkData.reason}**\n> ⏱️ **Went AFK** • <t:${afkData.timestamp}:R>`)
         );
 
         try {
