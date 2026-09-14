@@ -2,6 +2,7 @@ import { Declare, Command, type CommandContext } from 'seyfert';
 import { lavalink } from '../music/manager';
 import { successCard, errorCard } from '../cards/common';
 import { E } from '../components/emoji';
+import { requireSameVoice } from '../music/guards';
 
 @Declare({
   name: 'clear',
@@ -9,17 +10,11 @@ import { E } from '../components/emoji';
 })
 export default class ClearCommand extends Command {
   override async run(ctx: CommandContext) {
-    const player = lavalink().getPlayer(ctx.guildId!);
-    if (!player) {
-      await ctx.editOrReply(errorCard('Nothing is currently playing.').toMessage());
-      return;
-    }
+    if (!ctx.guildId) return;
 
-    const voiceState = await ctx.client.cache.voiceStates?.get(ctx.author.id, ctx.guildId!);
-    if (!voiceState || voiceState.channelId !== player.voiceChannelId) {
-      await ctx.editOrReply(errorCard('You must be in the same voice channel to clear the queue.').toMessage());
-      return;
-    }
+    if (!await requireSameVoice(ctx, ctx.guildId, 'clear the queue')) return;
+
+    const player = lavalink().getPlayer(ctx.guildId)!;
 
     if (player.queue.tracks.length === 0) {
       await ctx.editOrReply(errorCard('The queue is already empty.').toMessage());
@@ -32,3 +27,4 @@ export default class ClearCommand extends Command {
     await ctx.editOrReply(successCard(`${E.NOTES} Cleared ${count} tracks from the queue.`).toMessage());
   }
 }
+

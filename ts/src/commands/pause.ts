@@ -2,8 +2,8 @@ import { Declare, Command, type CommandContext } from 'seyfert';
 import { lavalink } from '../music/manager';
 import { successCard, errorCard } from '../cards/common';
 import { nowPlayingCard } from '../cards/music';
-import { setPlayerData } from '../music/playerData';
 import { E } from '../components/emoji';
+import { requireSameVoice } from '../music/guards';
 
 @Declare({
   name: 'pause',
@@ -11,17 +11,11 @@ import { E } from '../components/emoji';
 })
 export default class PauseCommand extends Command {
   override async run(ctx: CommandContext) {
-    const player = lavalink().getPlayer(ctx.guildId!);
-    if (!player) {
-      await ctx.editOrReply(errorCard('Nothing is currently playing.').toMessage());
-      return;
-    }
+    if (!ctx.guildId) return;
 
-    const voiceState = await ctx.client.cache.voiceStates?.get(ctx.author.id, ctx.guildId!);
-    if (!voiceState || voiceState.channelId !== player.voiceChannelId) {
-      await ctx.editOrReply(errorCard('You must be in the same voice channel to pause.').toMessage());
-      return;
-    }
+    if (!await requireSameVoice(ctx, ctx.guildId, 'pause')) return;
+
+    const player = lavalink().getPlayer(ctx.guildId)!;
 
     if (player.paused) {
       await ctx.editOrReply(errorCard('The player is already paused.').toMessage());
@@ -29,14 +23,13 @@ export default class PauseCommand extends Command {
     }
 
     await player.pause();
-    
-    // We should update the now playing card if possible, or just reply
+
     const track = player.queue.current;
     if (track) {
-      const card = nowPlayingCard(player, track);
-      await ctx.editOrReply(card.toMessage());
+      await ctx.editOrReply(nowPlayingCard(player, track).toMessage());
     } else {
       await ctx.editOrReply(successCard(`${E.PAUSED} Paused.`).toMessage());
     }
   }
 }
+

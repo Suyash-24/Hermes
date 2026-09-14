@@ -1,10 +1,9 @@
 import { Declare, Command, type CommandContext, Options, createStringOption } from 'seyfert';
-import { lavalink, lavalinkReady, searchNode } from '../music/manager';
+import { lavalink, lavalinkReady } from '../music/manager';
 import { searchForPlay } from '../music/search';
-import { setPlayerData } from '../music/playerData';
-import { nowPlayingCard, playlistQueuedCard, queuedCard } from '../cards/music';
+import { playlistQueuedCard, queuedCard, startingPlaybackCard } from '../cards/music';
 import { errorCard } from '../cards/common';
-import { E } from '../components/emoji';
+import { requireUserVoice } from '../music/guards';
 
 const options = {
   query: createStringOption({
@@ -33,60 +32,58 @@ export default class PlayCommand extends Command {
       return;
     }
 
-    const voiceState = await ctx.client.cache.voiceStates?.get(ctx.author.id, ctx.guildId);
-    if (!voiceState?.channelId) {
-      await ctx.editOrReply(errorCard('You need to join a voice channel first!').toMessage());
-      return;
-    }
-
-    const requester = {
-      id: ctx.author.id,
-      username: ctx.author.username,
-      avatarUrl: ctx.author.avatarURL() ?? ctx.author.defaultAvatarURL(),
-    };
+    // Guard: user must be in a VC and bot must have Connect/Speak perms there.
+    const channelId = await requireUserVoice(ctx, ctx.guildId);
+    if (!channelId) return;
 
     if (!lavalinkReady()) {
       await ctx.editOrReply(errorCard('The music player is currently connecting to Lavalink. Please try again in a moment.').toMessage());
       return;
     }
 
+    // If the bot is already playing in a *different* VC, block the request.
     let player = lavalink().getPlayer(ctx.guildId);
-    
+    if (player?.voiceChannelId && player.voiceChannelId !== channelId) {
+      await ctx.editOrReply(
+        errorCard(`I'm already playing music in <#${player.voiceChannelId}>. Join that channel or use \`/join\` to move me.`).toMessage(),
+      );
+      return;
+    }
+
     if (!player) {
       player = lavalink().createPlayer({
         guildId: ctx.guildId,
-        voiceChannelId: voiceState.channelId,
+        voiceChannelId: channelId,
         textChannelId: ctx.channelId,
         selfDeaf: true,
         selfMute: false,
       });
     }
 
-    // Only connect if we aren't already in or connecting to this voice channel
-    if (!player.voiceChannelId || player.voiceChannelId !== voiceState.channelId) {
-      player.voiceChannelId = voiceState.channelId;
+    // Only connect if we aren't already in or connecting to this voice channel.
+    if (!player.voiceChannelId || player.voiceChannelId !== channelId) {
+      player.voiceChannelId = channelId;
       await player.connect();
     } else if (!player.connected && !player.voice?.sessionId) {
       await player.connect();
     }
 
     try {
-      const result = await searchForPlay(player, query, requester);
+      const result = await searchForPlay(player, query, {
+        id: ctx.author.id,
+        username: ctx.author.username,
+        avatarUrl: ctx.author.avatarURL() ?? ctx.author.defaultAvatarURL(),
+      });
       const isPlaying = player.playing || player.paused;
 
       player.queue.add(result.tracks);
 
       if (result.playlistName) {
         if (!isPlaying) {
+          // Let the trackStart event exclusively post the Now Playing card.
+          // We just confirm the action so the deferred reply resolves.
           await player.play();
-          const card = nowPlayingCard(player, player.queue.current!);
-          const reply: any = await ctx.editOrReply(card.toMessage());
-          if (reply && typeof reply === 'object' && 'id' in reply && player.queue.current) {
-            setPlayerData(player, {
-              nowPlayingMsg: { channelId: ctx.channelId, messageId: reply.id },
-              nowPlayingTrackId: player.queue.current.info.identifier,
-            });
-          }
+          await ctx.editOrReply(startingPlaybackCard(result.tracks[0]).toMessage());
         } else {
           const card = playlistQueuedCard(result.tracks, result.playlistName);
           await ctx.editOrReply(card.toMessage());
@@ -94,15 +91,9 @@ export default class PlayCommand extends Command {
       } else {
         const track = result.tracks[0];
         if (!isPlaying) {
+          // Let the trackStart event exclusively post the Now Playing card.
           await player.play();
-          const card = nowPlayingCard(player, player.queue.current!);
-          const reply: any = await ctx.editOrReply(card.toMessage());
-          if (reply && typeof reply === 'object' && 'id' in reply && player.queue.current) {
-            setPlayerData(player, {
-              nowPlayingMsg: { channelId: ctx.channelId, messageId: reply.id },
-              nowPlayingTrackId: player.queue.current.info.identifier,
-            });
-          }
+          await ctx.editOrReply(startingPlaybackCard(track).toMessage());
         } else {
           const position = player.queue.tracks.length;
           const card = queuedCard(track, position);

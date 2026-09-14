@@ -269,3 +269,24 @@ export function queueEndedCard(): FadeResponse {
     c.text(`${E.STOPPED} Queue ended — nothing left to play.`),
   );
 }
+
+/**
+ * A lightweight confirmation shown by `/play` when starting fresh playback.
+ *
+ * The full Now Playing card is sent exclusively by the `trackStart` event handler
+ * to avoid a race condition where both the slash-command reply and the event
+ * handler post a card for the same track simultaneously.
+ */
+export function startingPlaybackCard(track: AnyTrack): FadeResponse {
+  return response().container(Colour.FADE, c =>
+    c.section(s =>
+      s
+        .text(`${E.PLAYING} **Starting Playback**`)
+        .text(
+          `**${truncate(track.info.title, 50)}**\n` +
+            `${authorOf(track)} ${E.DOT} ${E.DURATION} \`${durationDisplay(track)}\``,
+        )
+        .thumbnail(artworkOf(track)),
+    ),
+  );
+}

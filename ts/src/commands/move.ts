@@ -2,6 +2,7 @@ import { Declare, Command, type CommandContext, Options, createIntegerOption } f
 import { lavalink } from '../music/manager';
 import { successCard, errorCard } from '../cards/common';
 import { E } from '../components/emoji';
+import { requireSameVoice } from '../music/guards';
 
 const options = {
   from: createIntegerOption({
@@ -21,19 +22,13 @@ const options = {
 @Options(options)
 export default class MoveCommand extends Command {
   override async run(ctx: CommandContext<typeof options>) {
-    const player = lavalink().getPlayer(ctx.guildId!);
-    if (!player) {
-      await ctx.editOrReply(errorCard('Nothing is currently playing.').toMessage());
-      return;
-    }
+    if (!ctx.guildId) return;
 
-    const voiceState = await ctx.client.cache.voiceStates?.get(ctx.author.id, ctx.guildId!);
-    if (!voiceState || voiceState.channelId !== player.voiceChannelId) {
-      await ctx.editOrReply(errorCard('You must be in the same voice channel to move tracks.').toMessage());
-      return;
-    }
+    if (!await requireSameVoice(ctx, ctx.guildId, 'move tracks')) return;
 
+    const player = lavalink().getPlayer(ctx.guildId)!;
     const qLen = player.queue.tracks.length;
+
     if (qLen < 2) {
       await ctx.editOrReply(errorCard('Not enough tracks in the queue to move anything.').toMessage());
       return;
@@ -64,3 +59,4 @@ export default class MoveCommand extends Command {
     await ctx.editOrReply(successCard(`${E.NOTES} Moved **${track.info.title}** from #${from} to #${to}.`).toMessage());
   }
 }
+

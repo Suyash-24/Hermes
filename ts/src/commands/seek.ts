@@ -2,6 +2,7 @@ import { Declare, Command, type CommandContext, Options, createStringOption } fr
 import { lavalink } from '../music/manager';
 import { successCard, errorCard } from '../cards/common';
 import { E } from '../components/emoji';
+import { requireSameVoice } from '../music/guards';
 
 const options = {
   time: createStringOption({
@@ -20,7 +21,7 @@ function parseTimeStr(timeStr: string): number {
       return (parts[0] * 3600 + parts[1] * 60 + parts[2]) * 1000;
     }
   }
-  
+
   const num = parseInt(timeStr.replace(/[^0-9]/g, ''));
   if (!isNaN(num)) {
     if (timeStr.endsWith('s')) return num * 1000;
@@ -37,17 +38,11 @@ function parseTimeStr(timeStr: string): number {
 @Options(options)
 export default class SeekCommand extends Command {
   override async run(ctx: CommandContext<typeof options>) {
-    const player = lavalink().getPlayer(ctx.guildId!);
-    if (!player) {
-      await ctx.editOrReply(errorCard('Nothing is currently playing.').toMessage());
-      return;
-    }
+    if (!ctx.guildId) return;
 
-    const voiceState = await ctx.client.cache.voiceStates?.get(ctx.author.id, ctx.guildId!);
-    if (!voiceState || voiceState.channelId !== player.voiceChannelId) {
-      await ctx.editOrReply(errorCard('You must be in the same voice channel to seek.').toMessage());
-      return;
-    }
+    if (!await requireSameVoice(ctx, ctx.guildId, 'seek')) return;
+
+    const player = lavalink().getPlayer(ctx.guildId)!;
 
     const track = player.queue.current;
     if (!track || track.info.isStream) {
@@ -65,3 +60,4 @@ export default class SeekCommand extends Command {
     await ctx.editOrReply(successCard(`${E.PLAYING} Seeked to \`${ctx.options.time}\`.`).toMessage());
   }
 }
+

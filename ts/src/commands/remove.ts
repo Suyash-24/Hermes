@@ -2,6 +2,7 @@ import { Declare, Command, type CommandContext, Options, createIntegerOption } f
 import { lavalink } from '../music/manager';
 import { successCard, errorCard } from '../cards/common';
 import { E } from '../components/emoji';
+import { requireSameVoice } from '../music/guards';
 
 const options = {
   position: createIntegerOption({
@@ -17,18 +18,11 @@ const options = {
 @Options(options)
 export default class RemoveCommand extends Command {
   override async run(ctx: CommandContext<typeof options>) {
-    const player = lavalink().getPlayer(ctx.guildId!);
-    if (!player) {
-      await ctx.editOrReply(errorCard('Nothing is currently playing.').toMessage());
-      return;
-    }
+    if (!ctx.guildId) return;
 
-    const voiceState = await ctx.client.cache.voiceStates?.get(ctx.author.id, ctx.guildId!);
-    if (!voiceState || voiceState.channelId !== player.voiceChannelId) {
-      await ctx.editOrReply(errorCard('You must be in the same voice channel to remove tracks.').toMessage());
-      return;
-    }
+    if (!await requireSameVoice(ctx, ctx.guildId, 'remove tracks')) return;
 
+    const player = lavalink().getPlayer(ctx.guildId)!;
     const qLen = player.queue.tracks.length;
     const pos = ctx.options.position;
 
@@ -46,3 +40,4 @@ export default class RemoveCommand extends Command {
     await ctx.editOrReply(successCard(`${E.NOTES} Removed **${removed.info.title}** from the queue.`).toMessage());
   }
 }
+

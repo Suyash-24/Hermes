@@ -1,7 +1,8 @@
 import { Declare, Command, type CommandContext, Options, createIntegerOption } from 'seyfert';
 import { lavalink } from '../music/manager';
-import { successCard, errorCard } from '../cards/common';
+import { successCard } from '../cards/common';
 import { E } from '../components/emoji';
+import { requireSameVoice } from '../music/guards';
 
 const options = {
   level: createIntegerOption({
@@ -17,22 +18,15 @@ const options = {
 @Options(options)
 export default class VolumeCommand extends Command {
   override async run(ctx: CommandContext<typeof options>) {
-    const player = lavalink().getPlayer(ctx.guildId!);
-    if (!player) {
-      await ctx.editOrReply(errorCard('Nothing is currently playing.').toMessage());
-      return;
-    }
+    if (!ctx.guildId) return;
 
-    const voiceState = await ctx.client.cache.voiceStates?.get(ctx.author.id, ctx.guildId!);
-    if (!voiceState || voiceState.channelId !== player.voiceChannelId) {
-      await ctx.editOrReply(errorCard('You must be in the same voice channel to change volume.').toMessage());
-      return;
-    }
+    if (!await requireSameVoice(ctx, ctx.guildId, 'change volume')) return;
 
-    let level = ctx.options.level;
-    level = Math.max(0, Math.min(level, 100)); // Clamp between 0-100
+    const player = lavalink().getPlayer(ctx.guildId)!;
+    const level = Math.max(0, Math.min(ctx.options.level, 100));
 
     await player.setVolume(level);
     await ctx.editOrReply(successCard(`${E.VOLUME_UP} Volume set to \`${level}%\`.`).toMessage());
   }
 }
+

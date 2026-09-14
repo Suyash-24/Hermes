@@ -1,9 +1,8 @@
 import { Declare, Command, type CommandContext, Options, createIntegerOption } from 'seyfert';
 import { lavalink } from '../music/manager';
-import { successCard, errorCard } from '../cards/common';
-import { nowPlayingCard } from '../cards/music';
+import { successCard } from '../cards/common';
 import { E } from '../components/emoji';
-import { setPlayerData } from '../music/playerData';
+import { requireSameVoice } from '../music/guards';
 
 const options = {
   count: createIntegerOption({
@@ -19,25 +18,18 @@ const options = {
 @Options(options)
 export default class SkipCommand extends Command {
   override async run(ctx: CommandContext<typeof options>) {
-    const player = lavalink().getPlayer(ctx.guildId!);
-    if (!player) {
-      await ctx.editOrReply(errorCard('Nothing is currently playing.').toMessage());
-      return;
-    }
+    if (!ctx.guildId) return;
 
-    const voiceState = await ctx.client.cache.voiceStates?.get(ctx.author.id, ctx.guildId!);
-    if (!voiceState || voiceState.channelId !== player.voiceChannelId) {
-      await ctx.editOrReply(errorCard('You must be in the same voice channel to skip.').toMessage());
-      return;
-    }
+    if (!await requireSameVoice(ctx, ctx.guildId, 'skip')) return;
 
+    const player = lavalink().getPlayer(ctx.guildId)!;
     const count = Math.max(ctx.options.count ?? 1, 1);
 
-    // If we skip more than what's left, we just skip to the end of the queue.
+    // If we skip more than what's left, lavalink-client handles it gracefully.
     await player.skip(count);
 
-    // wait briefly for player to update its state or emit trackStart
-    // but we can also just send a generic skip success message, since trackStart event will post the new card!
+    // trackStart event will post the new Now Playing card.
     await ctx.editOrReply(successCard(`${E.SKIP} Skipped ${count > 1 ? `${count} tracks` : 'the track'}.`).toMessage());
   }
 }
+

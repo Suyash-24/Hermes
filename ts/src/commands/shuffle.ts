@@ -1,8 +1,9 @@
 import { Declare, Command, type CommandContext } from 'seyfert';
 import { lavalink } from '../music/manager';
-import { successCard, errorCard } from '../cards/common';
+import { successCard } from '../cards/common';
 import { setPlayerData, playerData } from '../music/playerData';
 import { E } from '../components/emoji';
+import { requireSameVoice } from '../music/guards';
 
 @Declare({
   name: 'shuffle',
@@ -10,17 +11,11 @@ import { E } from '../components/emoji';
 })
 export default class ShuffleCommand extends Command {
   override async run(ctx: CommandContext) {
-    const player = lavalink().getPlayer(ctx.guildId!);
-    if (!player) {
-      await ctx.editOrReply(errorCard('Nothing is currently playing.').toMessage());
-      return;
-    }
+    if (!ctx.guildId) return;
 
-    const voiceState = await ctx.client.cache.voiceStates?.get(ctx.author.id, ctx.guildId!);
-    if (!voiceState || voiceState.channelId !== player.voiceChannelId) {
-      await ctx.editOrReply(errorCard('You must be in the same voice channel to toggle shuffle.').toMessage());
-      return;
-    }
+    if (!await requireSameVoice(ctx, ctx.guildId, 'toggle shuffle')) return;
+
+    const player = lavalink().getPlayer(ctx.guildId)!;
 
     const currentShuffle = playerData(player).shuffle;
     if (!currentShuffle) {
@@ -33,3 +28,4 @@ export default class ShuffleCommand extends Command {
     }
   }
 }
+
