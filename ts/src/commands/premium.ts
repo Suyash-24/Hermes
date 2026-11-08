@@ -33,7 +33,9 @@ export default class PremiumCommand extends Command {
       if (isPremium) {
         await ctx.editOrReply(successCard(`${E.NOTES} This server has **Premium Status**.`).toMessage());
       } else {
-        await ctx.editOrReply(successCard(`${E.NOTES} This server does not have premium status.`).toMessage());
+        await ctx.editOrReply(
+          successCard(`${E.NOTES} This server does not have premium status.`).toMessage(),
+        );
       }
     } else if (ctx.options.action === 'claim') {
       // In a real bot, you'd check user's entitlement / database for premium tokens

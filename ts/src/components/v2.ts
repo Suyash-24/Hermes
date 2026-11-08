@@ -153,8 +153,7 @@ export class ActionRowBuilder {
 
 /** A card with an optional accent stripe down its left edge. */
 export class ContainerBuilder {
-  private readonly components: (TextDisplay | Separator | Section | MediaGallery | ActionRow<Button>)[] =
-    [];
+  private readonly components: (TextDisplay | Separator | Section | MediaGallery | ActionRow<Button>)[] = [];
   private isSpoiler = false;
 
   /** `accent` is a 24-bit RGB integer, e.g. `Colour.FADE`. */
@@ -214,9 +213,7 @@ export class ContainerBuilder {
   }
 
   build(): Container {
-    const container = new Container()
-      .addComponents(this.components)
-      .setSpoiler(this.isSpoiler);
+    const container = new Container().addComponents(this.components).setSpoiler(this.isSpoiler);
     // The fix: Rust dropped this, so no card ever showed its accent stripe.
     if (this.accent !== undefined) container.setColor(this.accent);
     return container;
@@ -286,7 +283,11 @@ export class FadeResponse {
   }
 
   /** Body for `ctx.write` / `ctx.editOrReply` / `channel.messages.write`. */
-  toMessage(): { flags: number; components: FadeComponent[]; allowed_mentions: { replied_user: boolean; parse: [] } } {
+  toMessage(): {
+    flags: number;
+    components: FadeComponent[];
+    allowed_mentions: { replied_user: boolean; parse: [] };
+  } {
     return {
       flags: this.flags,
       components: this.toComponents(),
@@ -296,7 +297,7 @@ export class FadeResponse {
 
   /** Raw JSON, for the few places that hit the Discord REST API directly. */
   toJSON(): { flags: number; components: unknown[] } {
-    return { flags: this.flags, components: this.components.map(c => c.toJSON()) };
+    return { flags: this.flags, components: this.components.map((c) => c.toJSON()) };
   }
 }
 

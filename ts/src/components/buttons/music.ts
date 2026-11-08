@@ -15,7 +15,7 @@ export default class MusicButtons extends ComponentCommand {
     if (!ctx.guildId) return;
 
     // All music buttons require the user to be in the same VC as the bot.
-    if (!await requireSameVoice(ctx, ctx.guildId, 'use these controls')) return;
+    if (!(await requireSameVoice(ctx, ctx.guildId, 'use these controls'))) return;
 
     const player = lavalink().getPlayer(ctx.guildId)!;
 
@@ -86,8 +86,9 @@ export default class MusicButtons extends ComponentCommand {
       await ctx.editOrReply(nowPlayingCard(player, track).toMessage());
     } else {
       // For stop/skip/prev the trackEnd/trackStart events handle the card.
-      try { await ctx.interaction.deferUpdate(); } catch {}
+      try {
+        await ctx.interaction.deferUpdate();
+      } catch {}
     }
   }
 }
-

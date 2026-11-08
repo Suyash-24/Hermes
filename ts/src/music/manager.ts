@@ -45,7 +45,9 @@ if (typeof originalOpen === 'function') {
     try {
       return await originalOpen.call(this);
     } catch (err: any) {
-      log.warn(`Lavalink node (${this.restAddress}) handshake failed: ${err?.message || err}. Will retry automatically...`);
+      log.warn(
+        `Lavalink node (${this.restAddress}) handshake failed: ${err?.message || err}. Will retry automatically...`,
+      );
       try {
         if (this.socket) {
           this.socket.close(4001, 'InfoFetchFailed');
@@ -104,7 +106,7 @@ function sendToShard(client: Client): (guildId: string, payload: GuildShardPaylo
   return (guildId, payload) => {
     try {
       const shardId = client.gateway.calculateShardId(guildId);
-      void client.gateway.send(shardId, payload as unknown as GatewaySendPayload).catch(err => {
+      void client.gateway.send(shardId, payload as unknown as GatewaySendPayload).catch((err) => {
         log.warn(`Failed to send voice payload for guild ${guildId}:`, err);
       });
     } catch (err) {
@@ -146,7 +148,7 @@ export function initLavalink(client: Client, config: Config): LavalinkManager {
         // `music/events.ts` because it has to exempt 24/7 guilds, and this
         // option destroys the player unconditionally.
       },
-      requesterTransformer: requester => requester,
+      requesterTransformer: (requester) => requester,
     },
 
     queueOptions: { maxPreviousTracks: MAX_PREVIOUS_TRACKS },
@@ -155,15 +157,17 @@ export function initLavalink(client: Client, config: Config): LavalinkManager {
   registerMusicEvents(manager);
 
   // Lifecycle listeners on NodeManager for transparent logging and recovery
-  manager.nodeManager.on('connect', node => {
+  manager.nodeManager.on('connect', (node) => {
     log.info(`Connected to Lavalink node "${node.id}" (${node.options.host}:${node.options.port})`);
   });
 
   manager.nodeManager.on('disconnect', (node, reason) => {
-    log.warn(`Disconnected from Lavalink node "${node.id}" (${reason.code}: ${reason.reason || 'unknown'}). Reconnecting...`);
+    log.warn(
+      `Disconnected from Lavalink node "${node.id}" (${reason.code}: ${reason.reason || 'unknown'}). Reconnecting...`,
+    );
   });
 
-  manager.nodeManager.on('reconnecting', node => {
+  manager.nodeManager.on('reconnecting', (node) => {
     log.info(`Reconnecting to Lavalink node "${node.id}"...`);
   });
 
@@ -171,7 +175,7 @@ export function initLavalink(client: Client, config: Config): LavalinkManager {
     log.warn(`Lavalink node "${node.id}" error: ${error?.message || error}`);
   });
 
-  manager.nodeManager.on('destroy', node => {
+  manager.nodeManager.on('destroy', (node) => {
     log.warn(`Lavalink node "${node.id}" destroyed. Supervisor will re-instantiate.`);
     try {
       const newNode = manager.nodeManager.createNode(nodeOptions(config));

@@ -13,15 +13,13 @@ export default class PingRefresh extends ComponentCommand {
   override async run(ctx: ComponentContext<typeof this.componentType>) {
     const client = useClient();
     const latency = client.gateway.latency ?? 'N/A';
-    
-    const response = new FadeResponse()
-      .container(undefined, c => c
+
+    const response = new FadeResponse().container(undefined, (c) =>
+      c
         .text(`## ${E.BRAND} Pong!`)
         .text(stat(E.LATENCY, 'Latency', `${latency} ms`))
-        .actionRow(r => r
-          .buttonEmoji('ping_refresh', 'Refresh', ButtonStyle.Secondary, E.REFRESH)
-        )
-      );
+        .actionRow((r) => r.buttonEmoji('ping_refresh', 'Refresh', ButtonStyle.Secondary, E.REFRESH)),
+    );
 
     await ctx.editOrReply(response.toMessage());
   }

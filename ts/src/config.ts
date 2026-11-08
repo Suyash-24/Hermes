@@ -80,12 +80,12 @@ function asBoolean(value: unknown, fallback: boolean): boolean {
 function asIdList(value: unknown): string[] {
   if (!Array.isArray(value)) return [];
   return value
-    .map(entry => {
+    .map((entry) => {
       if (typeof entry === 'string') return entry.trim();
       if (typeof entry === 'bigint' || typeof entry === 'number') return String(entry);
       return '';
     })
-    .filter(id => /^\d{15,25}$/.test(id));
+    .filter((id) => /^\d{15,25}$/.test(id));
 }
 
 function table(source: Record<string, unknown>, key: string): Record<string, unknown> {
@@ -114,10 +114,7 @@ function loadDotEnv() {
           if (eqIdx !== -1) {
             const key = trimmed.slice(0, eqIdx).trim();
             let val = trimmed.slice(eqIdx + 1).trim();
-            if (
-              (val.startsWith('"') && val.endsWith('"')) ||
-              (val.startsWith("'") && val.endsWith("'"))
-            ) {
+            if ((val.startsWith('"') && val.endsWith('"')) || (val.startsWith("'") && val.endsWith("'"))) {
               val = val.slice(1, -1);
             }
             if (!process.env[key] && val.length > 0) {
@@ -170,10 +167,7 @@ export function loadConfig(): Config {
   let raw: Record<string, unknown> = {};
 
   if (existsSync(path)) {
-    raw = parseToml(readFileSync(path, 'utf8'), { integersAsBigInt: true }) as Record<
-      string,
-      unknown
-    >;
+    raw = parseToml(readFileSync(path, 'utf8'), { integersAsBigInt: true }) as Record<string, unknown>;
   }
 
   const bot = table(raw, 'bot');

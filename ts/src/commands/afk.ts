@@ -1,8 +1,13 @@
-import { Declare, Command, type CommandContext, Options, createStringOption } from 'seyfert';
+import {
+  Declare,
+  Command,
+  type CommandContext,
+  Options,
+  createStringOption,
+} from 'seyfert';
 import { appState } from '../state';
-import { E } from '../components/emoji';
-import { FadeResponse } from '../components/v2';
 import { nowSecs } from '../db';
+import { afkSetCard } from '../cards/afk';
 
 const options = {
   reason: createStringOption({
@@ -13,34 +18,47 @@ const options = {
 
 @Declare({
   name: 'afk',
-  description: 'Set your AFK status. You will be marked AFK until you send a message.',
+  description: 'Set your AFK status',
 })
 @Options(options)
 export default class AfkCommand extends Command {
   override async run(ctx: CommandContext<typeof options>) {
     const reason = ctx.options.reason?.trim() || 'AFK';
+    const scope = 'global';
+    const dmMentions = false;
+
+    let guildName: string | undefined;
+    if (ctx.guildId) {
+      const cached = await ctx.client.cache.guilds?.get(ctx.guildId);
+      guildName = cached?.name;
+    }
+
     const state = appState();
-    
-    // Save AFK status
+    const timestamp = nowSecs();
+
+    // Save full AFK state in database
     state.db.afkUsers.set(ctx.author.id, {
       reason,
-      timestamp: nowSecs(),
+      timestamp,
+      scope,
+      guildName,
+      dmMentions,
+      mentions: [],
     });
     state.db.save();
 
     const avatar = ctx.author.avatarURL() ?? ctx.author.defaultAvatarURL();
-    const timestamp = nowSecs();
 
-    const response = new FadeResponse().container(undefined, c => c
-      .section(s => s
-        .text(`## ${E.AFK_SET} AFK Set`)
-        .text(`*Your status has been updated.*\n*I'll notify anyone who mentions you.*`)
-        .thumbnail(avatar)
-      )
-      .separator(true)
-      .text(`> ${E.SHINE} **Reason** • **${reason}**\n> ${E.SHINE} **Marked at** • <t:${timestamp}:t> (<t:${timestamp}:R>)`)
-    );
+    const card = afkSetCard({
+      userId: ctx.author.id,
+      avatarUrl: avatar,
+      reason,
+      timestamp,
+      scope,
+      guildName,
+      dmMentions,
+    });
 
-    await ctx.editOrReply(response.toMessage());
+    await ctx.editOrReply(card.toMessage());
   }
 }

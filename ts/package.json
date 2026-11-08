@@ -12,14 +12,18 @@
     "dev": "tsx watch src/index.ts",
     "start": "node dist/index.js",
     "build": "tsc",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "lint": "biome check src",
+    "lint:fix": "biome check --write src",
+    "check": "npm run lint && npm run typecheck"
   },
   "dependencies": {
+    "@biomejs/biome": "2.6.6",
     "dotenv": "^16.4.7",
     "jimp": "1.6.1",
     "lavalink-client": "2.11.0",
     "picocolors": "^1.1.1",
-    "seyfert": "5.0.0",
+    "seyfert": "5.2.1",
     "smol-toml": "1.8.0"
   },
   "devDependencies": {

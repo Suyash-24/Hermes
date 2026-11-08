@@ -84,9 +84,7 @@ async function sendNowPlaying(player: Player, track: Track): Promise<void> {
   }
 
   if (existing) {
-    await client.messages
-      .delete(existing.messageId, existing.channelId)
-      .catch(() => undefined);
+    await client.messages.delete(existing.messageId, existing.channelId).catch(() => undefined);
     forgetNowPlaying(player);
   }
 
@@ -164,7 +162,7 @@ async function leaveIfIdle(guildId: string): Promise<void> {
   log.info(`Leaving guild ${guildId} after ${IDLE_LEAVE_MS / 1000}s idle`);
 
   await deleteNowPlaying(player);
-  await player.destroy('QueueEmpty').catch(err => {
+  await player.destroy('QueueEmpty').catch((err) => {
     log.warn(`Failed to destroy the idle player for guild ${guildId}: ${describe(err)}`);
   });
   if (voiceChannelId) await clearVoiceStatus(voiceChannelId);
@@ -178,7 +176,7 @@ function scheduleIdleLeave(player: Player): void {
   const guildId = player.guildId;
   cancelIdleLeave(guildId);
   const timer = setTimeout(() => {
-    void leaveIfIdle(guildId).catch(err => {
+    void leaveIfIdle(guildId).catch((err) => {
       log.warn(`Idle-leave check failed for guild ${guildId}: ${describe(err)}`);
     });
   }, IDLE_LEAVE_MS);
@@ -193,7 +191,7 @@ async function announceQueueEnded(player: Player): Promise<void> {
   if (!channelId) return;
   await useClient()
     .messages.write(channelId, queueEndedCard().toMessage())
-    .catch(err => log.debug(`Could not announce queue end: ${describe(err)}`));
+    .catch((err) => log.debug(`Could not announce queue end: ${describe(err)}`));
 }
 
 /** A short `"Title by guild"` tag for log lines. */
@@ -213,7 +211,7 @@ export function registerMusicEvents(manager: LavalinkManager): void {
     if (player.voiceChannelId) void showNowPlayingStatus(player.voiceChannelId, titleOf(track));
     void sendNowPlaying(player, track);
     // Resolve the next autoplay pick while this one plays, so the gap is short.
-    void prefetchAutoplay(player, track).catch(err => {
+    void prefetchAutoplay(player, track).catch((err) => {
       log.warn(`Autoplay prefetch failed for ${tag(player, track)}: ${describe(err)}`);
     });
   });

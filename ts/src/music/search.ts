@@ -30,11 +30,7 @@ function nodeOf(searcher: Searcher): LavalinkNode {
  * Raw load. Never throws on "no results" — callers decide whether an empty
  * result is an error, because `/play` and autoplay want different handling.
  */
-export async function load(
-  searcher: Searcher,
-  query: string,
-  requester?: Requester,
-): Promise<SearchResult> {
+export async function load(searcher: Searcher, query: string, requester?: Requester): Promise<SearchResult> {
   try {
     return await nodeOf(searcher).search({ query }, requester, false);
   } catch (err) {
@@ -43,11 +39,7 @@ export async function load(
 }
 
 /** The top hit for a query. Throws `NoResults` when there is none. */
-export async function searchOne(
-  searcher: Searcher,
-  query: string,
-  requester?: Requester,
-): Promise<Track> {
+export async function searchOne(searcher: Searcher, query: string, requester?: Requester): Promise<Track> {
   const result = await load(searcher, query, requester);
   const track = result.tracks[0];
   if (!track) throw BotError.noResults(query);

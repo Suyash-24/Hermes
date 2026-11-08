@@ -39,20 +39,22 @@ export function errorCard(message: string): FadeResponse {
   const content = startsWithEmoji(message) ? message : `${E.ERROR} ${message}`;
   return response()
     .ephemeral()
-    .container(Colour.DANGER, c => c.text(content));
+    .container(undefined, (c) => c.text(content));
 }
 
 /**
- * A confirmation card. The message is rendered verbatim — callers supply their
- * own leading emoji, as they did in Rust.
+ * A confirmation card. The message is prefixed with E.OK when it doesn't
+ * already start with an emoji.
  */
 export function successCard(message: string): FadeResponse {
-  return response().container(Colour.SUCCESS, c => c.text(message));
+  const content = startsWithEmoji(message) ? message : `${E.OK} ${message}`;
+  return response().container(undefined, (c) => c.text(content));
 }
 
 /** A neutral informational card, for replies that are neither. */
 export function infoCard(message: string): FadeResponse {
-  return response().container(Colour.INFO, c => c.text(message));
+  const content = startsWithEmoji(message) ? message : `${E.INFO} ${message}`;
+  return response().container(undefined, (c) => c.text(content));
 }
 
 /**

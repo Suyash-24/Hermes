@@ -55,7 +55,7 @@ export function initLogging({ level, pretty }: LoggingOptions): void {
     // Beautiful Claude Code aesthetic logger
     Logger.customize((self, logLevel, args) => {
       const time = pc.dim(new Date().toLocaleTimeString([], { hour12: false }));
-      
+
       let badge = '';
       let msgColor = (s: string) => s;
 

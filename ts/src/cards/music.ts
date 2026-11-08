@@ -21,14 +21,7 @@
  * their own emoji (`music_cards.rs:75-80`), so it rendered "🔁 ➡️ Off  🔀 🔀 Off".
  */
 import type { Player } from 'lavalink-client';
-import {
-  Colour,
-  E,
-  formatDurationMs,
-  header,
-  hint,
-  progressBar,
-} from './../components/emoji';
+import { Colour, E, formatDurationMs, header, hint, progressBar } from './../components/emoji';
 import { ButtonStyle, type FadeResponse, response } from './../components/v2';
 import { playerData, requesterName } from './../music/playerData';
 import { repeatDisplay, repeatLabel } from './../music/repeat';
@@ -125,9 +118,9 @@ export function nowPlayingCard(player: Player, track: AnyTrack): FadeResponse {
   const shuffle = playerData(player).shuffle ? 'On' : 'Off';
   const duration = durationDisplay(track);
 
-  return response().container(Colour.MUSIC, c =>
+  return response().container(Colour.MUSIC, (c) =>
     c
-      .section(s =>
+      .section((s) =>
         s
           .text(header(E.MUSIC, 'Now Playing'))
           .text(
@@ -145,7 +138,7 @@ export function nowPlayingCard(player: Player, track: AnyTrack): FadeResponse {
           `${E.VOLUME_UP} \`${volume}%\``,
       )
       .separator(true)
-      .actionRow(r =>
+      .actionRow((r) =>
         r
           .buttonEmoji(MUSIC_BUTTON.prev, 'Prev', ButtonStyle.Secondary, E.PREV)
           .buttonEmoji(
@@ -157,7 +150,7 @@ export function nowPlayingCard(player: Player, track: AnyTrack): FadeResponse {
           .buttonEmoji(MUSIC_BUTTON.skip, 'Skip', ButtonStyle.Secondary, E.SKIP)
           .buttonEmoji(MUSIC_BUTTON.stop, 'Stop', ButtonStyle.Danger, E.STOPPED),
       )
-      .actionRow(r =>
+      .actionRow((r) =>
         r
           .buttonEmoji(MUSIC_BUTTON.shuffle, 'Shuffle', ButtonStyle.Secondary, E.SHUFFLE)
           .buttonEmoji(MUSIC_BUTTON.loop, 'Loop', ButtonStyle.Secondary, E.LOOP)
@@ -171,8 +164,8 @@ export function nowPlayingCard(player: Player, track: AnyTrack): FadeResponse {
 
 /** The compact "added to queue" card. `position` is 1-based, as Rust printed it. */
 export function queuedCard(track: AnyTrack, position: number): FadeResponse {
-  return response().container(Colour.FADE, c =>
-    c.section(s =>
+  return response().container(Colour.FADE, (c) =>
+    c.section((s) =>
       s
         .text(`${E.NOTES} **Added to Queue**`)
         .text(
@@ -193,11 +186,8 @@ export function queuedCard(track: AnyTrack, position: number): FadeResponse {
  */
 export function playlistQueuedCard(tracks: readonly AnyTrack[], name?: string): FadeResponse {
   const title = name ? `**${truncate(name, 60)}**` : '**Playlist Added**';
-  return response().container(Colour.FADE, c =>
-    c.text(
-      `${E.DISC} ${title} — ${tracks.length} tracks ` +
-        `${E.PIPE} \`${totalDurationDisplay(tracks)}\``,
-    ),
+  return response().container(Colour.FADE, (c) =>
+    c.text(`${E.DISC} ${title} — ${tracks.length} tracks ` + `${E.PIPE} \`${totalDurationDisplay(tracks)}\``),
   );
 }
 
@@ -239,7 +229,7 @@ export function queueCard(player: Player, page = 0): FadeResponse {
     `Vol: ${Math.round(player.volume)}% ${E.PIPE} ` +
     `Total: ${totalDurationDisplay(tracks)}`;
 
-  return response().container(Colour.QUEUE, c => {
+  return response().container(Colour.QUEUE, (c) => {
     c.text(header(E.QUEUE, `Queue  ${E.PIPE} Page ${current + 1}/${totalPages}`))
       .separator(true)
       .text(body)
@@ -247,7 +237,7 @@ export function queueCard(player: Player, page = 0): FadeResponse {
       .text(hint(footer));
 
     if (totalPages > 1) {
-      c.actionRow(r => {
+      c.actionRow((r) => {
         if (current > 0) {
           r.buttonEmoji(queuePageId(current - 1), 'Prev', ButtonStyle.Secondary, E.BACK);
         } else {
@@ -265,9 +255,7 @@ export function queueCard(player: Player, page = 0): FadeResponse {
 
 /** The "queue ended" notice `music/events.ts` posts when nothing is left. */
 export function queueEndedCard(): FadeResponse {
-  return response().container(Colour.MIST, c =>
-    c.text(`${E.STOPPED} Queue ended — nothing left to play.`),
-  );
+  return response().container(Colour.MIST, (c) => c.text(`${E.STOPPED} Queue ended — nothing left to play.`));
 }
 
 /**
@@ -278,8 +266,8 @@ export function queueEndedCard(): FadeResponse {
  * handler post a card for the same track simultaneously.
  */
 export function startingPlaybackCard(track: AnyTrack): FadeResponse {
-  return response().container(Colour.FADE, c =>
-    c.section(s =>
+  return response().container(Colour.FADE, (c) =>
+    c.section((s) =>
       s
         .text(`${E.PLAYING} **Starting Playback**`)
         .text(

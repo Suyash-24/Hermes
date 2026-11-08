@@ -77,7 +77,7 @@ export function totalDurationMs(tracks: readonly AnyTrack[]): number {
 
 /** Whether any track in the list is a live stream, which makes a total meaningless. */
 export function hasStream(tracks: readonly AnyTrack[]): boolean {
-  return tracks.some(track => track.info.isStream === true);
+  return tracks.some((track) => track.info.isStream === true);
 }
 
 /**

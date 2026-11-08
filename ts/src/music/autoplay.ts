@@ -116,7 +116,7 @@ function collectRecent(player: Player, ...extra: (Track | null | undefined)[]): 
 
 /** Whether a resolved track has been played recently. */
 function isRecent(track: Track, recent: RecentPlays): boolean {
-  return keysOf(track.info).some(key => recent.keys.has(key));
+  return keysOf(track.info).some((key) => recent.keys.has(key));
 }
 
 // ── Recommendation sources ────────────────────────────────────────────────────
@@ -165,7 +165,7 @@ async function queryPuter(
 ): Promise<string | undefined> {
   const avoid = recent.labels.slice(0, PROMPT_HISTORY);
   const avoidClause = avoid.length
-    ? ` Do NOT recommend any of these recently played tracks: ${avoid.map(l => `'${l}'`).join(', ')}.`
+    ? ` Do NOT recommend any of these recently played tracks: ${avoid.map((l) => `'${l}'`).join(', ')}.`
     : '';
 
   const body = {
@@ -256,7 +256,7 @@ async function firstFreshHit(
   recent: RecentPlays,
   scan = FALLBACK_SCAN,
 ): Promise<Track | undefined> {
-  const result = await load(player, query).catch(err => {
+  const result = await load(player, query).catch((err) => {
     log.warn(`Autoplay search for "${query}" failed: ${describe(err)}`);
     return undefined;
   });

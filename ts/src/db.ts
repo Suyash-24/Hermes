@@ -158,14 +158,45 @@ function readIdMap(value: unknown): Map<string, string> {
   return out;
 }
 
-/** `{ "<id>": { "reason": "<string>", "timestamp": <number> } }` */
-function readAfkMap(value: unknown): Map<string, { reason: string; timestamp: number }> {
-  const out = new Map<string, { reason: string; timestamp: number }>();
+export interface AfkMention {
+  authorId: string;
+  authorName: string;
+  guildId: string;
+  guildName: string;
+  channelId: string;
+  messageId: string;
+  content: string;
+  timestamp: number;
+}
+
+export interface AfkData {
+  reason: string;
+  timestamp: number;
+  /** 'global' for all servers, or guildId for server-only */
+  scope: 'global' | string;
+  /** Guild name if server-scoped */
+  guildName?: string;
+  /** Whether to automatically DM mentions upon return */
+  dmMentions: boolean;
+  /** Mentions received while AFK */
+  mentions: AfkMention[];
+}
+
+/** `{ "<id>": { "reason": "<string>", "timestamp": <number>, "scope": "<string>", ... } }` */
+function readAfkMap(value: unknown): Map<string, AfkData> {
+  const out = new Map<string, AfkData>();
   for (const [key, raw] of Object.entries(asRecord(value))) {
     const id = asId(key);
     const obj = asRecord(raw);
     if (id && typeof obj.reason === 'string' && typeof obj.timestamp === 'number') {
-      out.set(id, { reason: obj.reason, timestamp: obj.timestamp });
+      out.set(id, {
+        reason: obj.reason,
+        timestamp: obj.timestamp,
+        scope: typeof obj.scope === 'string' ? obj.scope : 'global',
+        guildName: typeof obj.guildName === 'string' ? obj.guildName : undefined,
+        dmMentions: obj.dmMentions === true,
+        mentions: Array.isArray(obj.mentions) ? (obj.mentions as AfkMention[]) : [],
+      });
     }
   }
   return out;
@@ -228,7 +259,7 @@ export class Database {
   /** Guild ID → channel ID of the active voice connection. */
   activeVoiceChannels = new Map<string, string>();
   /** User ID -> AFK info. */
-  afkUsers = new Map<string, { reason: string; timestamp: number }>();
+  afkUsers = new Map<string, AfkData>();
 
   /** Read the store from disk, or start empty when it is missing or corrupt. */
   static load(): Database {

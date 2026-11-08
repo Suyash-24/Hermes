@@ -23,10 +23,7 @@ import { lavalink } from './manager';
 type AnyCtx = CommandContext | ComponentContext<'Button'>;
 
 // Bits the bot needs before it can even open a voice connection.
-const VOICE_PERMS =
-  PermissionFlagsBits.Connect |
-  PermissionFlagsBits.Speak |
-  PermissionFlagsBits.ViewChannel;
+const VOICE_PERMS = PermissionFlagsBits.Connect | PermissionFlagsBits.Speak | PermissionFlagsBits.ViewChannel;
 
 // ── Internal helpers ─────────────────────────────────────────────────────────
 
@@ -59,10 +56,7 @@ async function getBotMember(ctx: AnyCtx, guildId: string) {
  *
  * Use this **before** connecting the bot (e.g. in `/play` and `/join`).
  */
-export async function requireUserVoice(
-  ctx: AnyCtx,
-  guildId: string,
-): Promise<string | false> {
+export async function requireUserVoice(ctx: AnyCtx, guildId: string): Promise<string | false> {
   // 1. User must be in a voice channel.
   const voiceState = await ctx.client.cache.voiceStates?.get(ctx.author.id, guildId);
   if (!voiceState?.channelId) {

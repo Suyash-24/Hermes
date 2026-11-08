@@ -37,13 +37,16 @@ export const E = {
   OK: '<:tick:1541095138074431508>',
   ERROR: '<:cross:1541095302881345627>',
   WARN: '<:warning:1541095227400650754>',
-  INFO: 'ℹ',
+  INFO: '<:oldcomputer:1568905408301502585>',
+  OLD_COMPUTER: '<:oldcomputer:1568905408301502585>',
 
   // AFK
-  AFK_SET: '<a:afkset:1546811558989004831>',
-  IS_AFK: '<a:isafk:1546811589531930664>',
-  AFK_REMOVE: '<a:afkremove:1546811591885066331>',
+  AFK_SET: '<:afkset:1546811558989004831>',
+  IS_AFK: '<:isafk:1546811589531930664>',
+  AFK_REMOVE: '<:afkremove:1546811591885066331>',
   SHINE: '<:shine:1546855654831030412>',
+  MOON: '<:moon:1568902733585449101>',
+  CLOCK: '⏱️',
 
   // ── Actions / UI ────────────────────────────────────────────────────────────
   REFRESH: '🔄',
