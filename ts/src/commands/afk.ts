@@ -38,9 +38,10 @@ export default class AfkCommand extends Command {
 
     const state = appState();
     const timestamp = nowSecs();
+    const userId = String(ctx.author.id).trim();
 
     // Save full AFK state in database
-    state.db.afkUsers.set(ctx.author.id, {
+    state.db.afkUsers.set(userId, {
       reason,
       timestamp,
       scope,
@@ -49,12 +50,12 @@ export default class AfkCommand extends Command {
       mentions: [],
     });
     state.db.save();
-    log.info(`[afk] User ${ctx.author.username} (${ctx.author.id}) set AFK: "${reason}"`);
+    log.info(`[afk] User ${ctx.author.username} (${userId}) set AFK: "${reason}". Total AFK in memory: ${state.db.afkUsers.size}`);
 
     const avatar = ctx.author.avatarURL() ?? ctx.author.defaultAvatarURL();
 
     const card = afkSetCard({
-      userId: ctx.author.id,
+      userId,
       avatarUrl: avatar,
       reason,
       timestamp,

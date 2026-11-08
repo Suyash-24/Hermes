@@ -40,11 +40,14 @@ function loadEnv() {
 
 loadEnv();
 
+const isTs = process.argv.some(arg => arg.includes('tsx') || arg.includes('ts-node') || arg.endsWith('.ts'));
+const base = isTs ? 'src' : 'dist';
+
 module.exports = config.bot({
   token: process.env.DISCORD_TOKEN ?? "",
   intents: ["Guilds", "GuildMessages", "MessageContent", "GuildVoiceStates"],
   locations: {
-    base: "src",
+    base,
     output: "dist",
     commands: "commands",
     events: "events",

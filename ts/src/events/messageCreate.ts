@@ -15,13 +15,25 @@ const log = logger('afk');
 export default createEvent({
   data: { name: 'messageCreate', once: false },
   async run(message, client) {
-    if (message.author.bot) return;
+    if (!message || !message.author) return;
+
+    const authorId = String(message.author.id || '').trim();
+    const currentGuildId = message.guildId ? String(message.guildId).trim() : undefined;
+    const isBot = Boolean(message.author.bot);
+
+    log.info(
+      `[messageCreate] Message from ${message.author.username || 'unknown'} (${authorId}), bot=${isBot}, guild=${currentGuildId || 'DM'}, content="${message.content || ''}"`,
+    );
+
+    if (isBot) return;
 
     const state = appState();
-    const authorId = message.author.id;
-    const currentGuildId = message.guildId;
 
     // ── 1. Check if the author is returning from AFK ────────────────────────────
+    log.info(
+      `[messageCreate] Checking AFK for ${authorId}: has=${state.db.afkUsers.has(authorId)}, total AFK users=${state.db.afkUsers.size}`,
+    );
+
     if (state.db.afkUsers.has(authorId)) {
       const afkData = state.db.afkUsers.get(authorId)!;
 
@@ -29,7 +41,7 @@ export default createEvent({
       const isMatchingScope = afkData.scope === 'global' || afkData.scope === currentGuildId;
 
       if (isMatchingScope) {
-        log.info(`[messageCreate] User ${message.author.username} (${authorId}) returned from AFK`);
+        log.info(`[messageCreate] User ${message.author.username} (${authorId}) returning from AFK!`);
         state.db.afkUsers.delete(authorId);
         state.db.save();
 
@@ -72,15 +84,17 @@ export default createEvent({
             ...welcomeCard.toMessage(),
             allowed_mentions: { replied_user: false, parse: [] },
           });
+          log.info(`[messageCreate] Successfully replied with welcomeCard to ${authorId}`);
         } catch (err) {
-          log.warn(`Failed to reply with welcomeCard to message ${message.id}, falling back to channel write:`, err);
+          log.warn(`[messageCreate] Failed to reply with welcomeCard to ${authorId}, falling back to channel write:`, err);
           try {
             await client.messages.write(message.channelId, {
               ...welcomeCard.toMessage(),
               allowed_mentions: { replied_user: false, parse: [] },
             });
+            log.info(`[messageCreate] Successfully sent welcomeCard via channel write to ${message.channelId}`);
           } catch (writeErr) {
-            log.error('Failed to write welcomeCard to channel:', writeErr);
+            log.error('[messageCreate] Failed to write welcomeCard to channel:', writeErr);
           }
         }
       }
@@ -91,7 +105,7 @@ export default createEvent({
 
     if (Array.isArray(message.mentions?.users)) {
       for (const user of message.mentions.users) {
-        const uId = user.id ?? (user as any).user?.id;
+        const uId = String(user.id ?? (user as any).user?.id ?? '').trim();
         if (uId && uId !== authorId) mentionedIds.add(uId);
       }
     }
@@ -100,7 +114,8 @@ export default createEvent({
     const rawMentions = (message as any).raw?.mentions;
     if (Array.isArray(rawMentions)) {
       for (const rawUser of rawMentions) {
-        if (rawUser.id && rawUser.id !== authorId) mentionedIds.add(rawUser.id);
+        const rId = String(rawUser.id || '').trim();
+        if (rId && rId !== authorId) mentionedIds.add(rId);
       }
     }
 
@@ -110,11 +125,14 @@ export default createEvent({
       let match: RegExpExecArray | null;
       // biome-ignore lint/suspicious/noAssignInExpressions: standard regex-exec loop idiom
       while ((match = mentionRegex.exec(message.content)) !== null) {
-        if (match[1] && match[1] !== authorId) mentionedIds.add(match[1]);
+        const mId = String(match[1] || '').trim();
+        if (mId && mId !== authorId) mentionedIds.add(mId);
       }
     }
 
     if (mentionedIds.size === 0) return;
+
+    log.info(`[messageCreate] Mentioned user IDs in message: ${[...mentionedIds].join(', ')}`);
 
     // Resolve guild name for nice display in mentions
     let guildName = 'Server';
@@ -178,15 +196,17 @@ export default createEvent({
             ...mentionedCard.toMessage(),
             allowed_mentions: { replied_user: false, parse: [] },
           });
+          log.info(`[messageCreate] Successfully replied with mentionedCard for AFK user ${id}`);
         } catch (err) {
-          log.warn(`Failed to reply with mentionedCard for user ${id}, falling back to channel write:`, err);
+          log.warn(`[messageCreate] Failed to reply with mentionedCard for user ${id}, falling back to channel write:`, err);
           try {
             await client.messages.write(message.channelId, {
               ...mentionedCard.toMessage(),
               allowed_mentions: { replied_user: false, parse: [] },
             });
+            log.info(`[messageCreate] Successfully sent mentionedCard via channel write for AFK user ${id}`);
           } catch (writeErr) {
-            log.error('Failed to write mentionedCard to channel:', writeErr);
+            log.error('[messageCreate] Failed to write mentionedCard to channel:', writeErr);
           }
         }
       }
