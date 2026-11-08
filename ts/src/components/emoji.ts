@@ -46,7 +46,8 @@ export const E = {
   AFK_REMOVE: '<a:afkremove:1546811591885066331>',
   SHINE: '<:shine:1546855654831030412>',
   MOON: '<:moon:1568902733585449101>',
-  CLOCK: '⏱️',
+  STOPWATCH: '<:stopwatch:1568911152308559894>',
+  CLOCK: '<:stopwatch:1568911152308559894>',
 
   // ── Actions / UI ────────────────────────────────────────────────────────────
   REFRESH: '🔄',

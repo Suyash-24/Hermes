@@ -66,8 +66,8 @@ export function afkSetCard(opts: AfkSetCardOptions): FadeResponse {
       )
       .separator(true)
       .text(
-        `> ${E.SHINE} **Reason** • **${truncate(opts.reason, 100)}**\n` +
-          `> ${E.CLOCK} **Marked at** • <t:${opts.timestamp}:t> (<t:${opts.timestamp}:R>)`,
+        `> ${E.MOON} **Reason** • **${truncate(opts.reason, 100)}**\n` +
+          `> ${E.STOPWATCH} **Marked at** • <t:${opts.timestamp}:t> (<t:${opts.timestamp}:R>)`,
       )
       .actionRow((r) =>
         r
@@ -107,8 +107,8 @@ export function afkMentionedCard(opts: AfkMentionedCardOptions): FadeResponse {
       )
       .separator(true)
       .text(
-        `> ${E.SHINE} **Reason** • **${truncate(opts.reason, 100)}**\n` +
-          `> ${E.CLOCK} **Went AFK** • <t:${opts.timestamp}:R>`,
+        `> ${E.MOON} **Reason** • **${truncate(opts.reason, 100)}**\n` +
+          `> ${E.STOPWATCH} **Went AFK** • <t:${opts.timestamp}:R>`,
       ),
   );
 }
@@ -137,8 +137,8 @@ export function afkWelcomeBackCard(opts: AfkWelcomeBackOptions): FadeResponse {
     )
       .separator(true)
       .text(
-        `> ${E.SHINE} **Away for** • \`${opts.durationStr}\`\n` +
-          `> ${E.SHINE} **Reason was** • **${truncate(opts.reason, 100)}**\n` +
+        `> ${E.STOPWATCH} **Away for** • \`${opts.durationStr}\`\n` +
+          `> ${E.MOON} **Reason was** • **${truncate(opts.reason, 100)}**\n` +
           `> ${E.SHINE} **Mentions** • \`${opts.mentionsCount}\` mention${opts.mentionsCount === 1 ? '' : 's'} recorded while away${dmNote}`,
       );
 
