@@ -18,7 +18,10 @@ const log = logger('db');
 /** Path of the JSON store, overridable with `DATABASE_PATH`. */
 export function databasePath(): string {
   const override = process.env.DATABASE_PATH;
-  return resolve(override && override.length > 0 ? override : 'database.json');
+  if (override && override.length > 0) return resolve(override);
+  if (existsSync(resolve('database.json'))) return resolve('database.json');
+  if (existsSync(resolve('..', 'database.json'))) return resolve('..', 'database.json');
+  return resolve('database.json');
 }
 
 // ── Snowflake-safe JSON ───────────────────────────────────────────────────────
@@ -188,11 +191,12 @@ function readAfkMap(value: unknown): Map<string, AfkData> {
   for (const [key, raw] of Object.entries(asRecord(value))) {
     const id = asId(key);
     const obj = asRecord(raw);
-    if (id && typeof obj.reason === 'string' && typeof obj.timestamp === 'number') {
+    const timestamp = asTimestamp(obj.timestamp);
+    if (id && typeof obj.reason === 'string') {
       out.set(id, {
         reason: obj.reason,
-        timestamp: obj.timestamp,
-        scope: typeof obj.scope === 'string' ? obj.scope : 'global',
+        timestamp: timestamp > 0 ? timestamp : nowSecs(),
+        scope: typeof obj.scope === 'string' ? (obj.scope as any) : 'global',
         guildName: typeof obj.guildName === 'string' ? obj.guildName : undefined,
         dmMentions: obj.dmMentions === true,
         mentions: Array.isArray(obj.mentions) ? (obj.mentions as AfkMention[]) : [],
@@ -318,7 +322,11 @@ export class Database {
       const body = JSON.stringify(this.toJSON(), null, 2);
       const tmp = `${path}.tmp`;
       writeFileSync(tmp, body, 'utf8');
-      renameSync(tmp, path);
+      try {
+        renameSync(tmp, path);
+      } catch {
+        writeFileSync(path, body, 'utf8');
+      }
     } catch (err) {
       log.error('Failed to write database file:', err);
     }

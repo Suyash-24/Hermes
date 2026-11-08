@@ -8,6 +8,9 @@ import {
 import { appState } from '../state';
 import { nowSecs } from '../db';
 import { afkSetCard } from '../cards/afk';
+import { logger } from '../logging';
+
+const log = logger('afk');
 
 const options = {
   reason: createStringOption({
@@ -46,6 +49,7 @@ export default class AfkCommand extends Command {
       mentions: [],
     });
     state.db.save();
+    log.info(`[afk] User ${ctx.author.username} (${ctx.author.id}) set AFK: "${reason}"`);
 
     const avatar = ctx.author.avatarURL() ?? ctx.author.defaultAvatarURL();
 

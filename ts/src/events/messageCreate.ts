@@ -8,6 +8,9 @@ import {
   formatAfkDuration,
   storeReturnedMentions,
 } from '../cards/afk';
+import { logger } from '../logging';
+
+const log = logger('afk');
 
 export default createEvent({
   data: { name: 'messageCreate', once: false },
@@ -26,6 +29,7 @@ export default createEvent({
       const isMatchingScope = afkData.scope === 'global' || afkData.scope === currentGuildId;
 
       if (isMatchingScope) {
+        log.info(`[messageCreate] User ${message.author.username} (${authorId}) returned from AFK`);
         state.db.afkUsers.delete(authorId);
         state.db.save();
 
@@ -68,8 +72,16 @@ export default createEvent({
             ...welcomeCard.toMessage(),
             allowed_mentions: { replied_user: false, parse: [] },
           });
-        } catch {
-          // Ignore if unable to reply
+        } catch (err) {
+          log.warn(`Failed to reply with welcomeCard to message ${message.id}, falling back to channel write:`, err);
+          try {
+            await client.messages.write(message.channelId, {
+              ...welcomeCard.toMessage(),
+              allowed_mentions: { replied_user: false, parse: [] },
+            });
+          } catch (writeErr) {
+            log.error('Failed to write welcomeCard to channel:', writeErr);
+          }
         }
       }
     }
@@ -79,16 +91,27 @@ export default createEvent({
 
     if (Array.isArray(message.mentions?.users)) {
       for (const user of message.mentions.users) {
-        if (user.id && user.id !== authorId) mentionedIds.add(user.id);
+        const uId = user.id ?? (user as any).user?.id;
+        if (uId && uId !== authorId) mentionedIds.add(uId);
+      }
+    }
+
+    // Check raw gateway mentions if available
+    const rawMentions = (message as any).raw?.mentions;
+    if (Array.isArray(rawMentions)) {
+      for (const rawUser of rawMentions) {
+        if (rawUser.id && rawUser.id !== authorId) mentionedIds.add(rawUser.id);
       }
     }
 
     // Fallback regex matching for mentions in message content
-    const mentionRegex = /<@!?(\d+)>/g;
-    let match: RegExpExecArray | null;
-    // biome-ignore lint/suspicious/noAssignInExpressions: standard regex-exec loop idiom
-    while ((match = mentionRegex.exec(message.content)) !== null) {
-      if (match[1] && match[1] !== authorId) mentionedIds.add(match[1]);
+    if (typeof message.content === 'string') {
+      const mentionRegex = /<@!?(\d+)>/g;
+      let match: RegExpExecArray | null;
+      // biome-ignore lint/suspicious/noAssignInExpressions: standard regex-exec loop idiom
+      while ((match = mentionRegex.exec(message.content)) !== null) {
+        if (match[1] && match[1] !== authorId) mentionedIds.add(match[1]);
+      }
     }
 
     if (mentionedIds.size === 0) return;
@@ -108,6 +131,8 @@ export default createEvent({
         if (afkData.scope !== 'global' && afkData.scope !== currentGuildId) {
           continue;
         }
+
+        log.info(`[messageCreate] Mention of AFK user ${id} detected from ${message.author.username}`);
 
         // Record this mention
         afkData.mentions.push({
@@ -153,8 +178,16 @@ export default createEvent({
             ...mentionedCard.toMessage(),
             allowed_mentions: { replied_user: false, parse: [] },
           });
-        } catch {
-          // Ignore
+        } catch (err) {
+          log.warn(`Failed to reply with mentionedCard for user ${id}, falling back to channel write:`, err);
+          try {
+            await client.messages.write(message.channelId, {
+              ...mentionedCard.toMessage(),
+              allowed_mentions: { replied_user: false, parse: [] },
+            });
+          } catch (writeErr) {
+            log.error('Failed to write mentionedCard to channel:', writeErr);
+          }
         }
       }
     }
