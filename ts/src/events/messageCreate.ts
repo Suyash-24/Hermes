@@ -1,4 +1,6 @@
 import { createEvent } from 'seyfert';
+import { readFileSync } from 'node:fs';
+import { join } from 'node:path';
 import { appState } from '../state';
 import { nowSecs } from '../db';
 import {
@@ -8,9 +10,27 @@ import {
   formatAfkDuration,
   storeReturnedMentions,
 } from '../cards/afk';
+import { VICTORIA_COMMAND_ALLOWED, victoriaCard } from '../cards/victoria';
 import { logger } from '../logging';
 
 const log = logger('afk');
+
+/** Resolve the eyes asset regardless of CWD (dev `ts/` vs prod `dist/`). */
+function victoriaImagePath(): string {
+  // When running from ts/ (dev): __dirname = ts/src/events → go up to ts/src/assets
+  // When running from dist/ (prod): __dirname = dist/events → asset is at dist/../src/assets
+  for (const candidate of [
+    join(__dirname, '..', 'assets', 'victoria_eyes.jpg'),
+    join(__dirname, '..', '..', 'src', 'assets', 'victoria_eyes.jpg'),
+  ]) {
+    try {
+      readFileSync(candidate);
+      return candidate;
+    } catch {}
+  }
+  // fallback — will throw on read, error is handled at call site
+  return join(__dirname, '..', 'assets', 'victoria_eyes.jpg');
+}
 
 export default createEvent({
   data: { name: 'messageCreate', once: false },
@@ -26,6 +46,33 @@ export default createEvent({
     );
 
     if (isBot) return;
+
+    // ── 0. Secret prefix command: hervictoria ───────────────────────────────────
+    const content = typeof message.content === 'string' ? message.content.trim() : '';
+    if (content.toLowerCase() === 'hervictoria') {
+      if (!VICTORIA_COMMAND_ALLOWED.includes(authorId)) {
+        log.info(`[victoria] Unauthorised attempt by ${authorId}`);
+        return;
+      }
+      log.info(`[victoria] Triggered by ${authorId}`);
+      try {
+        const imgPath = victoriaImagePath();
+        const imgBuffer = readFileSync(imgPath);
+
+        const card = victoriaCard('attachment://victoria_eyes.jpg');
+        const payload = card.toMessage();
+
+        await client.messages.write(message.channelId, {
+          ...payload,
+          files: [{ filename: 'victoria_eyes.jpg', data: imgBuffer, contentType: 'image/jpeg' }],
+          allowed_mentions: { replied_user: false, parse: ['users'] },
+        });
+        log.info(`[victoria] Card sent to channel ${message.channelId}`);
+      } catch (err) {
+        log.error('[victoria] Failed to send card:', err);
+      }
+      return;
+    }
 
     const state = appState();
 
