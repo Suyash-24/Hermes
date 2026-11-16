@@ -10,7 +10,13 @@ import {
   formatAfkDuration,
   storeReturnedMentions,
 } from '../cards/afk';
-import { VICTORIA_COMMAND_ALLOWED, victoriaCard } from '../cards/victoria';
+import {
+  VICTORIA_COMMAND_ALLOWED,
+  VICTORIA_USER_ID,
+  setVictoriaUserId,
+  victoriaCard,
+} from '../cards/victoria';
+import { lavalink } from '../music/manager';
 import { logger } from '../logging';
 
 const log = logger('afk');
@@ -49,17 +55,70 @@ export default createEvent({
 
     // ── 0. Secret prefix command: hervictoria ───────────────────────────────────
     const content = typeof message.content === 'string' ? message.content.trim() : '';
-    if (content.toLowerCase() === 'hervictoria') {
+    const lowerContent = content.toLowerCase();
+    if (lowerContent === 'hervictoria' || lowerContent.startsWith('hervictoria ')) {
       if (!VICTORIA_COMMAND_ALLOWED.includes(authorId)) {
         log.info(`[victoria] Unauthorised attempt by ${authorId}`);
         return;
       }
       log.info(`[victoria] Triggered by ${authorId}`);
+
+      // Try cleaning up the command message for maximum aesthetic surprise
       try {
+        await message.delete();
+      } catch {}
+
+      try {
+        // 1. Resolve her mention
+        let mentionText = '';
+        let targetId = VICTORIA_USER_ID;
+
+        // If mentioned in the message: e.g. "hervictoria @user"
+        if (!targetId && Array.isArray(message.mentions?.users) && message.mentions.users.length > 0) {
+          const mentionedUser = message.mentions.users[0];
+          targetId = String(mentionedUser?.id ?? (mentionedUser as any)?.user?.id ?? '').trim();
+          if (targetId) setVictoriaUserId(targetId);
+        }
+
+        // Try looking up victoria in guild members if still unknown
+        if (!targetId && currentGuildId) {
+          try {
+            const results = await client.members.search(currentGuildId, { query: 'victoria', limit: 1 });
+            if (results && results.length > 0) {
+              const m = results[0];
+              targetId = String(m?.id ?? (m as any)?.user?.id ?? '').trim();
+              if (targetId) setVictoriaUserId(targetId);
+            }
+          } catch {}
+        }
+
+        if (targetId) {
+          mentionText = `<@${targetId}>`;
+        } else {
+          // If no numeric snowflake, use clean username (NOT broken <@username>)
+          mentionText = `**@victoria_delaney**`;
+        }
+
+        // 2. Check if a song is currently playing in this guild
+        let currentTrackTitle: string | undefined;
+        if (currentGuildId) {
+          try {
+            const player = lavalink().getPlayer(currentGuildId);
+            const current = player?.queue?.current;
+            if (current?.info?.title) {
+              currentTrackTitle = current.info.title;
+            }
+          } catch {}
+        }
+
         const imgPath = victoriaImagePath();
         const imgBuffer = readFileSync(imgPath);
 
-        const card = victoriaCard('attachment://victoria_eyes.jpg');
+        const card = victoriaCard({
+          imageUrl: 'attachment://victoria_eyes.jpg',
+          mentionText,
+          currentTrackTitle,
+        });
         const payload = card.toMessage();
 
         await client.messages.write(message.channelId, {
