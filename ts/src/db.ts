@@ -264,6 +264,8 @@ export class Database {
   activeVoiceChannels = new Map<string, string>();
   /** User ID -> AFK info. */
   afkUsers = new Map<string, AfkData>();
+  /** Bound Victoria user ID for the hervictoria private card. */
+  victoriaUserId?: string;
 
   /** Read the store from disk, or start empty when it is missing or corrupt. */
   static load(): Database {
@@ -292,6 +294,9 @@ export class Database {
     db.adminBypass = readBoolMap(raw.admin_bypass);
     db.activeVoiceChannels = readIdMap(raw.active_voice_channels);
     db.afkUsers = readAfkMap(raw.afk_users);
+    if (typeof raw.victoria_user_id === 'string' && raw.victoria_user_id.length > 0) {
+      db.victoriaUserId = raw.victoria_user_id;
+    }
 
     log.info(`Loaded database from ${path}`);
     return db;
@@ -309,6 +314,7 @@ export class Database {
       admin_bypass: writeMap(this.adminBypass),
       active_voice_channels: writeMap(this.activeVoiceChannels),
       afk_users: writeMap(this.afkUsers),
+      victoria_user_id: this.victoriaUserId,
     };
   }
 

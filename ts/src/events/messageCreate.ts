@@ -56,12 +56,14 @@ export default createEvent({
     // ── 0. Secret prefix command: hervictoria ───────────────────────────────────
     const content = typeof message.content === 'string' ? message.content.trim() : '';
     const lowerContent = content.toLowerCase();
-    if (lowerContent === 'hervictoria' || lowerContent.startsWith('hervictoria ')) {
+    if (lowerContent === 'hervictoria' || lowerContent.startsWith('hervictoria ') || lowerContent.startsWith('hervictoria<@')) {
       if (!VICTORIA_COMMAND_ALLOWED.includes(authorId)) {
         log.info(`[victoria] Unauthorised attempt by ${authorId}`);
         return;
       }
       log.info(`[victoria] Triggered by ${authorId}`);
+
+      const state = appState();
 
       // Try cleaning up the command message for maximum aesthetic surprise
       try {
@@ -69,34 +71,57 @@ export default createEvent({
       } catch {}
 
       try {
-        // 1. Resolve her mention
-        let mentionText = '';
-        let targetId = VICTORIA_USER_ID;
+        // 1. Resolve her user ID
+        // Priority:
+        // A) Explicit snowflake in command e.g. "hervictoria 123456789012345678" or "hervictoria <@123...>"
+        // B) Mentioned user in message object
+        // C) Already saved ID in database or memory
+        // D) Dynamic guild member search for 'victoria'
+        let targetId = state.db.victoriaUserId || VICTORIA_USER_ID;
 
-        // If mentioned in the message: e.g. "hervictoria @user"
-        if (!targetId && Array.isArray(message.mentions?.users) && message.mentions.users.length > 0) {
-          const mentionedUser = message.mentions.users[0];
-          targetId = String(mentionedUser?.id ?? (mentionedUser as any)?.user?.id ?? '').trim();
-          if (targetId) setVictoriaUserId(targetId);
-        }
-
-        // Try looking up victoria in guild members if still unknown
-        if (!targetId && currentGuildId) {
+        const explicitIdMatch = message.content.match(/(?:<@!?)?(\d{17,20})>?/);
+        if (explicitIdMatch?.[1] && explicitIdMatch[1] !== authorId) {
+          targetId = explicitIdMatch[1];
+          state.db.victoriaUserId = targetId;
+          state.db.save();
+          setVictoriaUserId(targetId);
+          log.info(`[victoria] Bound Victoria ID to ${targetId} from command`);
+        } else if (!targetId && Array.isArray(message.mentions?.users) && message.mentions.users.length > 0) {
+          const mentionedUser = message.mentions.users.find((u) => String(u?.id ?? (u as any)?.user?.id) !== authorId);
+          if (mentionedUser) {
+            targetId = String(mentionedUser.id ?? (mentionedUser as any).user?.id ?? '').trim();
+            if (targetId) {
+              state.db.victoriaUserId = targetId;
+              state.db.save();
+              setVictoriaUserId(targetId);
+              log.info(`[victoria] Bound Victoria ID to ${targetId} from mentions`);
+            }
+          }
+        } else if (!targetId && currentGuildId) {
           try {
-            const results = await client.members.search(currentGuildId, { query: 'victoria', limit: 1 });
+            const results = await client.members.search(currentGuildId, { query: 'victoria', limit: 5 });
             if (results && results.length > 0) {
-              const m = results[0];
-              targetId = String(m?.id ?? (m as any)?.user?.id ?? '').trim();
-              if (targetId) setVictoriaUserId(targetId);
+              for (const m of results) {
+                const uId = String(m?.id ?? (m as any)?.user?.id ?? '').trim();
+                if (uId && uId !== authorId) {
+                  targetId = uId;
+                  state.db.victoriaUserId = targetId;
+                  state.db.save();
+                  setVictoriaUserId(targetId);
+                  log.info(`[victoria] Bound Victoria ID to ${targetId} from member search`);
+                  break;
+                }
+              }
             }
           } catch {}
         }
 
+        let mentionText: string;
         if (targetId) {
           mentionText = `<@${targetId}>`;
         } else {
-          // If no numeric snowflake, use clean username (NOT broken <@username>)
           mentionText = `**@victoria_delaney**`;
+          log.warn('[victoria] No user ID found for Victoria. Run "hervictoria <id>" or "hervictoria @user" once to bind her ID.');
         }
 
         // 2. Check if a song is currently playing in this guild
@@ -123,10 +148,15 @@ export default createEvent({
 
         await client.messages.write(message.channelId, {
           ...payload,
+          content: targetId ? `<@${targetId}>` : undefined,
           files: [{ filename: 'victoria_eyes.jpg', data: imgBuffer, contentType: 'image/jpeg' }],
-          allowed_mentions: { replied_user: false, parse: ['users'] },
+          allowed_mentions: {
+            replied_user: false,
+            parse: ['users'],
+            users: targetId ? [targetId] : [],
+          },
         });
-        log.info(`[victoria] Card sent to channel ${message.channelId}`);
+        log.info(`[victoria] Card sent to channel ${message.channelId} (mentioning: ${targetId || 'unbound'})`);
       } catch (err) {
         log.error('[victoria] Failed to send card:', err);
       }
