@@ -5,7 +5,7 @@
  * export that `extends SubCommand`, so adding playback features is just
  * creating a file here — the parent picks it up automatically.
  */
-import { AutoLoad, Declare, SubCommand, type CommandContext } from 'seyfert';
+import { AutoLoad, Declare, Command, type CommandContext } from 'seyfert';
 import { infoCard } from '../../cards/common';
 import { E } from '../../components/emoji';
 
@@ -14,7 +14,7 @@ import { E } from '../../components/emoji';
   description: 'Play music and control playback in voice channels.',
 })
 @AutoLoad()
-export default class MusicCommand extends SubCommand {
+export default class MusicCommand extends Command {
   override async run(ctx: CommandContext) {
     await ctx.editOrReply(infoCard(`${E.MUSIC} Start a session with \`/music play\`.`).toMessage());
   }
